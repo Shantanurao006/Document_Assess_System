@@ -1,6 +1,7 @@
 const repository = require("../repositories/auth.repository");
 const pool = require("../config/db");
 const path = require("path");
+const fs = require("fs");
 const signPdf = require("../utils/pdfSigner");
 
 const validateApprover = async (email) => {
@@ -51,18 +52,37 @@ const approveDocument = async (body, file) => {
     );
 
     const uploadedSignaturePath = path.join(
-        __dirname,
-        "../uploads/signatures",
-        file.filename
-    );
+    __dirname,
+    "../uploads",
+    "signatures",
+    file.filename
+);
 
-    // Stamp the PDF
-    const signedPdfPath = await signPdf(
-        originalPdfPath,
-        uploadedSignaturePath,
-        status,
-        approvalDateTime
+console.log("PDF Path:", originalPdfPath);
+console.log("Signature Path:", uploadedSignaturePath);
+
+console.log(
+    "PDF Exists:",
+    fs.existsSync(originalPdfPath)
+);
+
+console.log(
+    "Signature Exists:",
+    fs.existsSync(uploadedSignaturePath)
+);
+
+if (!fs.existsSync(uploadedSignaturePath)) {
+    throw new Error(
+        `Signature file not found: ${uploadedSignaturePath}`
     );
+}
+
+const signedPdfPath = await signPdf(
+    originalPdfPath,
+    uploadedSignaturePath,
+    status,
+    approvalDateTime
+);
 
     // Update DB
     await pool.query(
