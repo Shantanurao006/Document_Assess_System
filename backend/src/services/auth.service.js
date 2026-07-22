@@ -18,6 +18,10 @@ const register = async (email, pin, isAdmin) => {
 
 const login = async (email, pin) => {
 
+    console.log("Login Request:");
+    console.log("Email:", email);
+    console.log("PIN:", pin);
+    
     const user = await repository.findUserByEmail(email);
 
     if (!user) {
