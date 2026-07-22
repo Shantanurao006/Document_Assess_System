@@ -11,6 +11,8 @@ const authRoute = require("./routes/auth.route");
 const uploadRoutes = require("./routes/upload.routes");
 const approverRoute = require("./routes/approver.route");
 const adminRoute = require("./routes/admin.route");
+const downloadRoute = require("./routes/download.route");
+const documentRoute = require("./routes/document.route");
 
 const app = express();
 
@@ -96,6 +98,8 @@ app.use("/api/auth", authRoute);
 app.use("/api", uploadRoutes);
 app.use("/api/approver", approverRoute);
 app.use("/api/admin", adminRoute);
+app.use("/api/document", downloadRoute);
+app.use("/api/document", documentRoute);
 
 // ----------------------
 // 404 Handler

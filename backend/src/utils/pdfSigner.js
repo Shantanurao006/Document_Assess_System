@@ -54,14 +54,29 @@ const signPdf = async (
 
     const signedPdf = await pdfDoc.save();
 
-    const outputPath = pdfPath.replace(
+    const signedFolder = path.join(
+    __dirname,
+    "../uploads",
+    "signed"
+);
+
+if (!fs.existsSync(signedFolder)) {
+    fs.mkdirSync(signedFolder, {
+        recursive: true,
+    });
+}
+
+const outputPath = path.join(
+    signedFolder,
+    path.basename(pdfPath).replace(
         ".pdf",
         "_signed.pdf"
-    );
+    )
+);
 
-    fs.writeFileSync(outputPath, signedPdf);
+fs.writeFileSync(outputPath, signedPdf);
 
-    return outputPath;
+return outputPath;
 };
 
 module.exports = signPdf;

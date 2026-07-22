@@ -4,6 +4,7 @@ import Home from "../pages/Home";
 import Register from "../pages/auth/Register";
 import Login from "../pages/auth/Login";
 import UserDashboard from "../pages/user/Dashboard";
+import MyDocuments from "../pages/user/MyDocuments";
 import AdminDashboard from "../pages/admin/Dashboard";
 
 function AppRoutes() {
@@ -30,9 +31,14 @@ function AppRoutes() {
 
         {/* Dashboards */}
         <Route
-          path="/user/dashboard"
-          element={<UserDashboard />}
-        />
+    path="/user/dashboard"
+    element={<UserDashboard />}
+/>
+
+<Route
+    path="/user/my-documents"
+    element={<MyDocuments />}
+/>
 
         <Route
           path="/admin/dashboard"

@@ -150,16 +150,25 @@ setDocuments([
           </Typography>
 
           <Button
-            variant="outlined"
-            color="inherit"
-            sx={{
-              color: "#fff",
-              borderColor: "#fff",
-            }}
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
+    variant="contained"
+    color="secondary"
+    sx={{ mr: 2 }}
+    onClick={() => navigate("/user/my-documents")}
+>
+    My Documents
+</Button>
+
+<Button
+    variant="outlined"
+    color="inherit"
+    sx={{
+        color: "#fff",
+        borderColor: "#fff",
+    }}
+    onClick={handleLogout}
+>
+    Logout
+</Button>
         </Toolbar>
       </AppBar>
 

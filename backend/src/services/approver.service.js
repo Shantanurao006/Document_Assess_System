@@ -23,12 +23,28 @@ const validateApprover = async (email) => {
 
 const approveDocument = async (body, file) => {
 
-    const {
-        documentId,
-        status,
-        approvalDateTime,
-    } = body;
+  const {
+    documentId,
+    status,
+    approvalDateTime,
+    approvedBy,
+} = body;
 
+// Fetch admin details
+const adminResult = await pool.query(
+    `
+    SELECT id, email
+    FROM users
+    WHERE email = $1
+    `,
+    [approvedBy]
+);
+
+if (adminResult.rows.length === 0) {
+    throw new Error("Admin not found.");
+}
+
+const admin = adminResult.rows[0];
     // Get document details
     const result = await pool.query(
         `
@@ -81,26 +97,31 @@ const signedPdfPath = await signPdf(
     originalPdfPath,
     uploadedSignaturePath,
     status,
-    approvalDateTime
+    approvalDateTime,
+    admin.email
 );
 
     // Update DB
     await pool.query(
-        `
-        UPDATE document_assignments
-            SET
-                status = $1,
-                approved_datetime = $2,
-                signed_by_image = $3
-            WHERE id = $4;
-        `,
-        [
-            status,
-            approvalDateTime,
-            file.filename,
-            documentId,
-        ]
-    );
+    `
+    UPDATE document_assignments
+        SET
+            status = $1,
+            approved_datetime = $2,
+            signed_by_image = $3,
+            approved_by = $4,
+            signed_pdf_name = $5
+        WHERE id = $6;
+    `,
+    [
+        status,
+        approvalDateTime,
+        file.filename,
+        admin.id,
+        path.basename(signedPdfPath),
+        documentId,
+    ]
+);
 
     return {
         documentId,
