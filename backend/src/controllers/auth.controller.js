@@ -16,12 +16,16 @@ const register = async (req, res) => {
 
     } catch (error) {
 
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+    console.error("========== LOGIN ERROR ==========");
+    console.error(error);
+    console.error("=================================");
 
-    }
+    res.status(500).json({
+        success: false,
+        message: error.message
+    });
+
+}
 
 };
 
