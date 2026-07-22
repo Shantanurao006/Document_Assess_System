@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
+const fs = require("fs");
 
 require("dotenv").config();
 
@@ -13,43 +14,96 @@ const adminRoute = require("./routes/admin.route");
 
 const app = express();
 
+// ----------------------
 // Middlewares
+// ----------------------
 app.use(cors());
+
 app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+    })
 );
+
 app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
+app.use(express.json());
+
 app.use(
-    "/uploads",
-    express.static(path.join(__dirname, "uploads"))
+    express.urlencoded({
+        extended: true,
+    })
 );
 
-// Health Check API
+// ----------------------
+// Uploads Directory
+// ----------------------
+const uploadsPath = path.join(__dirname, "uploads");
+
+console.log("======================================");
+console.log("Uploads Path :", uploadsPath);
+console.log("Uploads Exists :", fs.existsSync(uploadsPath));
+
+if (fs.existsSync(uploadsPath)) {
+    console.log("Files inside uploads:");
+    console.log(fs.readdirSync(uploadsPath));
+} else {
+    console.log("Uploads folder NOT FOUND");
+}
+
+console.log("======================================");
+
+// ----------------------
+// Serve Uploaded Files
+// ----------------------
+app.use("/uploads", express.static(uploadsPath));
+
+// ----------------------
+// Debug Route
+// ----------------------
+app.get("/uploads-test", (req, res) => {
+    try {
+        res.json({
+            uploadsPath,
+            exists: fs.existsSync(uploadsPath),
+            files: fs.existsSync(uploadsPath)
+                ? fs.readdirSync(uploadsPath)
+                : [],
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message,
+        });
+    }
+});
+
+// ----------------------
+// Health Check
+// ----------------------
 app.get("/", (req, res) => {
     res.status(200).json({
         success: true,
-        message: "Document Approval System Backend is Running 🚀"
+        message: "Document Approval System Backend is Running 🚀",
     });
 });
 
+// ----------------------
 // Routes
+// ----------------------
 app.use("/api/auth", authRoute);
 app.use("/api", uploadRoutes);
 app.use("/api/approver", approverRoute);
 app.use("/api/admin", adminRoute);
 
-// Invalid Route Handler
+// ----------------------
+// 404 Handler
+// ----------------------
 app.use((req, res) => {
     res.status(404).json({
         success: false,
-        message: "API Not Found"
+        message: "API Not Found",
     });
 });
 
