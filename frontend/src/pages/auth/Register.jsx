@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import API from "../../api/api";
 import {
   Box,
   Button,
@@ -49,14 +49,11 @@ function Register() {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          email: formData.email,
-          pin: formData.pin,
-          isAdmin: formData.isAdmin,
-        }
-      );
+      const response = await API.post("/auth/register", {
+  email: formData.email,
+  pin: formData.pin,
+  isAdmin: formData.isAdmin,
+});
 
       alert(response.data.message);
 

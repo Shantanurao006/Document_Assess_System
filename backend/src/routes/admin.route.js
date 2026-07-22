@@ -36,7 +36,7 @@ router.get("/documents/:adminId", async (req, res) => {
 
         const documents = result.rows.map((doc) => ({
     ...doc,
-    file_url: `http://localhost:5000/uploads/${doc.stored_file_name}`,
+    file_url: `${process.env.BASE_URL}/uploads/${doc.stored_file_name}`,
 }));
 
 return res.status(200).json({

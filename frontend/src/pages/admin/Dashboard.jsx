@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import API, { API_BASE_URL } from "../../api/api";
 import {
   AppBar,
   Toolbar,
@@ -62,9 +62,9 @@ const [numPages, setNumPages] = useState(0);
 
 const fetchDocuments = useCallback(async () => {
   try {
-    const response = await axios.get(
-      `http://localhost:5000/api/admin/documents/${user.id}`
-    );
+    const response = await API.get(
+  `/admin/documents/${user.id}`
+);
 
     setDocuments(response.data.data);
   } catch (error) {
@@ -129,16 +129,15 @@ const onDocumentLoadSuccess = ({ numPages }) => {
     formData.append("approvalDateTime", approvalDateTime.toISOString());
     formData.append("signature", signatureImage);
 
-    const response = await axios.post(
-      "http://localhost:5000/api/admin/document/approve",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
+    const response = await API.post(
+  "/admin/document/approve",
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }
+);
     alert(response.data.message);
 
     handleCloseDialog();
@@ -321,7 +320,7 @@ const [signaturePreview, setSignaturePreview] = useState("");
       .endsWith(".pdf") ? (
 
  <Document
-  file={`http://localhost:5000/uploads/${selectedDocument.stored_file_name}`}
+  file={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
   onLoadSuccess={onDocumentLoadSuccess}
   onLoadError={(error) => {
     console.error("PDF Load Error:", error);
@@ -341,7 +340,7 @@ const [signaturePreview, setSignaturePreview] = useState("");
     ) : (
 
       <img
-        src={`http://localhost:5000/uploads/${selectedDocument.stored_file_name}`}
+        src={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
         alt={selectedDocument.original_file_name}
         style={{
           width: "100%",

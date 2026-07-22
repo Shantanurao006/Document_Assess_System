@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../../api/api";
 import {
   Box,
   Button,
@@ -43,13 +43,10 @@ function Login() {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email: formData.email,
-          pin: formData.pin,
-        }
-      );
+      const response = await API.post("/auth/login", {
+  email: formData.email,
+  pin: formData.pin,
+});
 
       const user = response.data.data;
 
