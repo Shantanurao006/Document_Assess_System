@@ -30,6 +30,11 @@ const approveDocument = async (body, file) => {
     approvedBy,
 } = body;
 
+console.log("===============");
+console.log("Approve Body:", body);
+console.log("approvedBy:", approvedBy);
+console.log("===============");
+
 // Fetch admin details
 const adminResult = await pool.query(
     `

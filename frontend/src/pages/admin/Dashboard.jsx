@@ -122,12 +122,16 @@ const onDocumentLoadSuccess = ({ numPages }) => {
       return;
     }
 
-    const formData = new FormData();
+  const formData = new FormData();
 
-    formData.append("documentId", selectedDocument.id);
-    formData.append("status", approvalStatus);
-    formData.append("approvalDateTime", approvalDateTime.toISOString());
-    formData.append("signature", signatureImage);
+formData.append("documentId", selectedDocument.id);
+formData.append("status", approvalStatus);
+formData.append("approvalDateTime", approvalDateTime.toISOString());
+
+// NEW LINE
+formData.append("approvedBy", user.email);
+
+formData.append("signature", signatureImage);
 
     const response = await API.post(
   "/admin/document/approve",
