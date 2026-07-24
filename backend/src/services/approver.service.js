@@ -98,6 +98,12 @@ if (!fs.existsSync(uploadedSignaturePath)) {
     );
 }
 
+console.log("PDF Path:", originalPdfPath);
+console.log("PDF Exists:", fs.existsSync(originalPdfPath));
+
+const uploadsDir = path.join(__dirname, "../uploads");
+console.log("Files in uploads:", fs.readdirSync(uploadsDir));
+
 const signedPdfPath = await signPdf(
     originalPdfPath,
     uploadedSignaturePath,
