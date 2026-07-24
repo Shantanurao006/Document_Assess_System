@@ -6,15 +6,17 @@ const signPdf = async (
     pdfPath,
     signaturePath,
     status,
-    approvalDateTime
+    approvalDateTime,
+    approvedBy
 ) => {
 
     const pdfBytes = fs.readFileSync(pdfPath);
 
-    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const pdfDoc = await PDFDocument.load(pdfBytes, {
+        ignoreEncryption: true,
+    });
 
     const pages = pdfDoc.getPages();
-
     const page = pages[pages.length - 1];
 
     const { width } = page.getSize();
@@ -35,15 +37,21 @@ const signPdf = async (
         color: rgb(0, 0, 0),
     });
 
-    page.drawText(
-        `Approved On : ${approvalDateTime}`,
-        {
-            x: 50,
-            y: 100,
-            size: 12,
-            font,
-        }
-    );
+    page.drawText(`Approved On : ${approvalDateTime}`, {
+        x: 50,
+        y: 100,
+        size: 12,
+        font,
+        color: rgb(0, 0, 0),
+    });
+
+    page.drawText(`Approved By : ${approvedBy}`, {
+        x: 50,
+        y: 80,
+        size: 12,
+        font,
+        color: rgb(0, 0, 0),
+    });
 
     page.drawImage(signatureImage, {
         x: width - 180,
@@ -54,29 +62,20 @@ const signPdf = async (
 
     const signedPdf = await pdfDoc.save();
 
-    const signedFolder = path.join(
-    __dirname,
-    "../uploads",
-    "signed"
-);
+    const signedFolder = path.join(__dirname, "../uploads", "signed");
 
-if (!fs.existsSync(signedFolder)) {
-    fs.mkdirSync(signedFolder, {
-        recursive: true,
-    });
-}
+    if (!fs.existsSync(signedFolder)) {
+        fs.mkdirSync(signedFolder, { recursive: true });
+    }
 
-const outputPath = path.join(
-    signedFolder,
-    path.basename(pdfPath).replace(
-        ".pdf",
-        "_signed.pdf"
-    )
-);
+    const outputPath = path.join(
+        signedFolder,
+        path.basename(pdfPath).replace(".pdf", "_signed.pdf")
+    );
 
-fs.writeFileSync(outputPath, signedPdf);
+    fs.writeFileSync(outputPath, signedPdf);
 
-return outputPath;
+    return outputPath;
 };
 
 module.exports = signPdf;
