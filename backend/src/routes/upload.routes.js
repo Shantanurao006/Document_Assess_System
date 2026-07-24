@@ -88,6 +88,12 @@ for (let i = 0; i < req.files.length; i++) {
 
     const file = req.files[i];
 
+    console.log("=====================");
+    console.log("Uploaded File Name :", file.filename);
+    console.log("Uploaded File Path :", file.path);
+    console.log("File Exists :", fs.existsSync(file.path));
+    console.log("=====================");
+
     uploadedFiles.push({
         originalName: file.originalname,
         fileName: file.filename,
@@ -96,18 +102,10 @@ for (let i = 0; i < req.files.length; i++) {
         path: file.path,
     });
 
-    const file = req.files[i];
-    console.log("=====================");
-console.log("Uploaded File Name :", file.filename);
-console.log("Uploaded File Path :", file.path);
-console.log("File Exists :", fs.existsSync(file.path));
-console.log("=====================");
-
     const uploadedByUser = await pool.query(
         "SELECT id FROM users WHERE email=$1",
         [uploadedBy]
     );
-
     if (uploadedByUser.rows.length === 0) {
         throw new Error("Uploaded user not found.");
     }
