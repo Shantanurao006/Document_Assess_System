@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
-    Box,
+    AppBar,
+    Toolbar,
     Typography,
+    Box,
+    Button,
     Paper,
     Table,
     TableBody,
@@ -10,8 +14,12 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Button,
+    Chip,
+    IconButton,
+    Tooltip,
 } from "@mui/material";
+
+import DownloadIcon from "@mui/icons-material/Download";
 
 import {
     getMyDocuments,
@@ -19,6 +27,8 @@ import {
 } from "../../api/documentApi";
 
 function MyDocuments() {
+
+    const navigate = useNavigate();
 
     const [documents, setDocuments] = useState([]);
 
@@ -53,6 +63,11 @@ useEffect(() => {
 }, []);
 
 
+const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/");
+};
+
 const handleDownload = async (documentId, fileName) => {
 
     try {
@@ -84,109 +99,196 @@ const handleDownload = async (documentId, fileName) => {
     }
 
 };
+return (
+  <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
 
-    return (
-        <Box sx={{ p: 4 }}>
+    {/* Header */}
 
-            <Typography
-                variant="h4"
-                fontWeight="bold"
-                mb={3}
-            >
-                My Documents
-            </Typography>
+    <AppBar position="static">
 
-            <TableContainer
-                component={Paper}
-                elevation={3}
-            >
+      <Toolbar>
 
-                <Table>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          Document Approval System
+        </Typography>
 
-                    <TableHead>
+        <Typography sx={{ mr: 3 }}>
+          {user?.email}
+        </Typography>
 
-                        <TableRow>
+        <Button
+          color="inherit"
+          variant="outlined"
+          sx={{
+            borderColor: "white",
+            color: "white",
+          }}
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
 
-                            <TableCell><b>Document Name</b></TableCell>
+      </Toolbar>
 
-                            <TableCell><b>Approver</b></TableCell>
+    </AppBar>
 
-                            <TableCell><b>Status</b></TableCell>
+    {/* Body */}
 
-                            <TableCell><b>Uploaded On</b></TableCell>
+    <Box p={4}>
 
-                            <TableCell><b>Approved On</b></TableCell>
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+      >
+        My Documents
+      </Typography>
 
-                            <TableCell align="center">
-                                <b>Download</b>
-                            </TableCell>
+      <Typography
+        color="text.secondary"
+        mb={3}
+      >
+        Documents uploaded by you.
+      </Typography>
 
-                        </TableRow>
+      <Paper elevation={3}>
 
-                    </TableHead>
+        <TableContainer>
 
-                    <TableBody>
+          <Table>
 
-                        {documents.map((doc) => (
+            <TableHead>
 
-                            <TableRow key={doc.id}>
+              <TableRow>
 
-                                <TableCell>
-                                    {doc.original_file_name}
-                                </TableCell>
+                <TableCell>
+                  <b>ID</b>
+                </TableCell>
 
-                                <TableCell>
-                                    {doc.approver_email || "-"}
-                                </TableCell>
+                <TableCell>
+                  <b>Document</b>
+                </TableCell>
 
-                                <TableCell>
-                                    {doc.status}
-                                </TableCell>
+                <TableCell>
+                  <b>Approver</b>
+                </TableCell>
 
-                                <TableCell>
-                                    {doc.uploaded_datetime}
-                                </TableCell>
+                <TableCell>
+                  <b>Uploaded Date</b>
+                </TableCell>
 
-                                <TableCell>
-                                    {doc.approved_datetime || "-"}
-                                </TableCell>
+                <TableCell>
+                  <b>Status</b>
+                </TableCell>
 
-                                <TableCell align="center">
+                <TableCell align="center">
+                  <b>Download</b>
+                </TableCell>
 
-                                    {doc.status === "Approved" ? (
+              </TableRow>
 
-                                        <Button
-    variant="contained"
-    size="small"
-    onClick={() =>
-        handleDownload(
-            doc.id,
-            doc.signed_pdf_name
-        )
+            </TableHead>
+
+            <TableBody>
+
+              {documents.length === 0 ? (
+
+                <TableRow>
+
+                  <TableCell
+                    colSpan={6}
+                    align="center"
+                  >
+                    No Documents Found
+                  </TableCell>
+
+                </TableRow>
+
+              ) : (
+
+                documents.map((doc) => (
+
+                  <TableRow key={doc.id}>
+
+                    <TableCell>
+                      {doc.id}
+                    </TableCell>
+
+                    <TableCell>
+                      {doc.original_file_name}
+                    </TableCell>
+
+                    <TableCell>
+                      {doc.approver_email || "-"}
+                    </TableCell>
+
+                    <TableCell>
+  {doc.uploaded_datetime
+    ? new Date(doc.uploaded_datetime).toLocaleString()
+    : "-"}
+</TableCell>
+
+                    <TableCell>
+
+                      <Chip
+                        label={doc.status}
+                        color={
+                          doc.status === "Approved"
+                            ? "success"
+                            : doc.status === "Rejected"
+                            ? "error"
+                            : "warning"
+                        }
+                      />
+
+                    </TableCell>
+<TableCell align="center">
+  <Tooltip
+    title={
+      doc.status === "Approved"
+        ? "Download Signed Document"
+        : doc.status === "Rejected"
+        ? "Document was rejected"
+        : "Document is pending approval"
     }
->
-    Download
-</Button>
-                                    ) : (
+  >
+    <span>
+      <IconButton
+        color="primary"
+        disabled={doc.status !== "Approved"}
+        onClick={() => {
+          if (doc.status === "Approved") {
+            handleDownload(
+              doc.id,
+              doc.signed_pdf_name
+            );
+          }
+        }}
+      >
+        <DownloadIcon />
+      </IconButton>
+    </span>
+  </Tooltip>
+</TableCell>
 
-                                        "-"
+                  </TableRow>
 
-                                    )}
+                ))
 
-                                </TableCell>
+              )}
 
-                            </TableRow>
+            </TableBody>
 
-                        ))}
+          </Table>
 
-                    </TableBody>
+        </TableContainer>
 
-                </Table>
+      </Paper>
 
-            </TableContainer>
+    </Box>
 
-        </Box>
-    );
+  </Box>
+);
 }
 
 export default MyDocuments;

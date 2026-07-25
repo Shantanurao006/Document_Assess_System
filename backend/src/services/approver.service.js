@@ -98,6 +98,7 @@ if (!fs.existsSync(uploadedSignaturePath)) {
     );
 }
 
+
 console.log("PDF Path:", originalPdfPath);
 console.log("PDF Exists:", fs.existsSync(originalPdfPath));
 
