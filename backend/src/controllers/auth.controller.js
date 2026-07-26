@@ -1,7 +1,7 @@
 const service = require("../services/auth.service");
 
 const register = async (req, res) => {
-
+    console.log("REGISTER BODY:", req.body);
     try {
 
         const { email, pin, isAdmin } = req.body;
