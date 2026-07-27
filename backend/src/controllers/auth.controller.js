@@ -19,6 +19,7 @@ const register = async (req, res) => {
     console.error("========== LOGIN ERROR ==========");
     console.error(error);
     console.error("=================================");
+    console.error(error.stack);
 
     res.status(500).json({
         success: false,
