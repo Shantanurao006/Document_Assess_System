@@ -1,11 +1,9 @@
-// src/api/api.js
-
 import axios from "axios";
 
 // =====================================
 // Backend Base URL
 // =====================================
-const API_BASE_URL =
+export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 // =====================================
@@ -31,7 +29,7 @@ API.interceptors.request.use(
         config.headers.Authorization = `Bearer ${user.token}`;
       }
     } catch (err) {
-      console.error("Unable to parse user from localStorage", err);
+      console.error("Unable to parse user", err);
     }
 
     return config;
@@ -52,8 +50,6 @@ API.interceptors.response.use(
 
     switch (error.response.status) {
       case 401:
-        console.error("Unauthorized");
-
         localStorage.removeItem("user");
 
         if (window.location.pathname !== "/") {
@@ -74,10 +70,7 @@ API.interceptors.response.use(
         break;
 
       default:
-        console.error(
-          `Request failed with status ${error.response.status}`,
-          error.response.data
-        );
+        console.error(error.response.data);
     }
 
     return Promise.reject(error);
