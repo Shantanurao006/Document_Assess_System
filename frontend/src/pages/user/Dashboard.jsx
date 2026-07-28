@@ -486,12 +486,10 @@ const handleSubmit = async () => {
                             style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 12 }}
                           />
                         ) : (
-                          <object
-                            data={document.previewUrl}
-                            type={document.file?.type || "application/pdf"}
-                            width="100%"
-                            height="100%"
-                            style={{ border: "none" }}
+                          <iframe
+                            title={document.file?.name || "Document preview"}
+                            src={document.previewUrl}
+                            style={{ width: "100%", height: "100%", border: "none" }}
                           >
                             <Box
                               sx={{
@@ -523,7 +521,7 @@ const handleSubmit = async () => {
                                 Open file in new tab
                               </Button>
                             </Box>
-                          </object>
+                          </iframe>
                         )
                       ) : (
                         <Box
