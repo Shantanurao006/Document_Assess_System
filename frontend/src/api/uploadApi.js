@@ -20,7 +20,7 @@ export const uploadDocuments = async (
 
         formData.append(
             "approverEmails",
-            document.approverEmail
+            JSON.stringify(document.approverEmails)
         );
     });
 

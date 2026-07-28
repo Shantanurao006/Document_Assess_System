@@ -69,14 +69,29 @@ router.post("/upload", upload.array("documents"), async (req, res) => {
 
 const { uploadedBy } = req.body;
 
-const approverEmails = Array.isArray(req.body.approverEmails)
+const approverEmailValues = Array.isArray(req.body.approverEmails)
     ? req.body.approverEmails
     : [req.body.approverEmails];
 
+const approversByFile = approverEmailValues.map((value) => {
+    try {
+        const parsedValue = JSON.parse(value);
+        return Array.isArray(parsedValue) ? parsedValue : [parsedValue];
+    } catch {
+        return [value];
+    }
+});
+
+if (approversByFile.length !== req.files.length) {
+    return res.status(400).json({
+        success: false,
+        message: "Each uploaded file must have at least one approver.",
+    });
+}
+
 const uploadedFiles = [];
 console.log("BODY :", req.body);
-console.log("Approver Emails :", req.body.approverEmails);
-console.log("Type :", typeof req.body.approverEmails);
+console.log("Approver Emails :", approversByFile);
 
 for (let i = 0; i < req.files.length; i++) {
 
@@ -104,36 +119,38 @@ for (let i = 0; i < req.files.length; i++) {
         throw new Error("Uploaded user not found.");
     }
 
-    const approverUser = await pool.query(
-        "SELECT id FROM users WHERE email=$1",
-        [approverEmails[i]]
-    );
+    for (const approverEmail of approversByFile[i]) {
+        const approverUser = await pool.query(
+            "SELECT id FROM users WHERE email=$1",
+            [approverEmail]
+        );
 
-    if (approverUser.rows.length === 0) {
-        throw new Error("Approver not found.");
+        if (approverUser.rows.length === 0) {
+            throw new Error(`Approver not found: ${approverEmail}`);
+        }
+
+        await pool.query(
+            `
+            INSERT INTO document_assignments
+            (
+                original_file_name,
+                stored_file_name,
+                uploaded_by,
+                assigned_to,
+                status
+            )
+            VALUES
+            ($1,$2,$3,$4,$5)
+            `,
+            [
+                file.originalname,
+                file.filename,
+                uploadedByUser.rows[0].id,
+                approverUser.rows[0].id,
+                "Pending",
+            ]
+        );
     }
-
-    await pool.query(
-        `
-        INSERT INTO document_assignments
-        (
-            original_file_name,
-            stored_file_name,
-            uploaded_by,
-            assigned_to,
-            status
-        )
-        VALUES
-        ($1,$2,$3,$4,$5)
-        `,
-        [
-            file.originalname,
-            file.filename,
-            uploadedByUser.rows[0].id,
-            approverUser.rows[0].id,
-            "Pending",
-        ]
-    );
 }
 
         return res.status(200).json({
