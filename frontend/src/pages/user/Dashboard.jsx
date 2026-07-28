@@ -124,11 +124,7 @@ useEffect(() => {
     }
 
     updatedDocuments[index].file = file;
-    updatedDocuments[index].previewUrl = file
-      ? file.type.startsWith("image/")
-        ? URL.createObjectURL(file)
-        : ""
-      : "";
+    updatedDocuments[index].previewUrl = file ? URL.createObjectURL(file) : "";
 
     setDocuments(updatedDocuments);
   };
@@ -466,10 +462,10 @@ const handleSubmit = async () => {
                       }}
                     >
                       {document.previewUrl ? (
-                        <img
+                        <iframe
+                          title={document.file?.name || "Document preview"}
                           src={document.previewUrl}
-                          alt={document.file?.name || "Document preview"}
-                          style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 12 }}
+                          style={{ width: "100%", height: "100%", border: "none" }}
                         />
                       ) : (
                         <Box
