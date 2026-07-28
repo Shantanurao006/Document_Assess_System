@@ -26,6 +26,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -55,9 +57,17 @@ const [documents, setDocuments] = useState([
 
 const [isSubmitting, setIsSubmitting] = useState(false);
 const [dragging, setDragging] = useState(null);
+const [previewPageCounts, setPreviewPageCounts] = useState({});
 const previewRefs = useRef([]);
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const handleDocumentLoadSuccess = (documentIndex, { numPages }) => {
+  setPreviewPageCounts((prev) => ({
+    ...prev,
+    [documentIndex]: numPages,
+  }));
+};
 
 const updateApproverPosition = (documentIndex, approverIndex, x, y) => {
   setDocuments((prev) => {
@@ -472,18 +482,6 @@ const handleSubmit = async () => {
                             alt={document.file?.name || "Document preview"}
                             style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 12 }}
                           />
-                        ) : document.file?.type === "application/pdf" ? (
-                          <Document
-                            file={document.file}
-                            onLoadSuccess={() => null}
-                            loading={<Typography>Loading document...</Typography>}
-                            error={<Typography color="error">Unable to load preview.</Typography>}
-                          >
-                            <Page
-                              pageNumber={1}
-                              width={previewRefs.current[documentIndex]?.clientWidth || 700}
-                            />
-                          </Document>
                         ) : (
                           <object
                             data={document.previewUrl}
