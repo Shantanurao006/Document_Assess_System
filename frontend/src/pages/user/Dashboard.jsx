@@ -175,6 +175,8 @@ useEffect(() => {
             date: "",
             approvedBy: "",
             signature: "",
+            x: 20,
+            y: 20,
             detailOrder: ["status", "date", "approvedBy", "signature"],
           },
         ],
@@ -204,6 +206,8 @@ const addApproverEmail = (documentIndex) => {
     date: "",
     approvedBy: "",
     signature: "",
+    x: 20,
+    y: 20,
     detailOrder: ["status", "date", "approvedBy", "signature"],
   });
 
@@ -458,6 +462,7 @@ const handleSubmit = async () => {
                         flexDirection: "column",
                         gap: 2,
                         p: 3,
+                        zIndex: 1,
                       }}
                     >
                       {document.previewUrl ? (
@@ -484,7 +489,9 @@ const handleSubmit = async () => {
                             {document.file ? document.file.name : "Document preview"}
                           </Typography>
                           <Typography variant="body2" textAlign="center">
-                            {document.file ? `Uploaded document placeholder` : "Choose a file to display it here."}
+                            {document.file
+                              ? `Uploaded file preview is unavailable for this format.`
+                              : "Choose a file to display it here."}
                           </Typography>
                         </Box>
                       )}
@@ -503,9 +510,10 @@ const handleSubmit = async () => {
                           p: 2,
                           borderRadius: 2,
                           border: "1px solid rgba(0,0,0,0.12)",
-                          bgcolor: "rgba(255,255,255,0.9)",
+                          bgcolor: "rgba(255,255,255,0.95)",
                           cursor: "grab",
                           userSelect: "none",
+                          zIndex: 2,
                         }}
                       >
                         <Box
