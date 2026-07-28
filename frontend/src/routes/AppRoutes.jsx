@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import Home from "../pages/Home";
+// Landing page removed; redirect root to /login so only one login page exists
 import Register from "../pages/auth/Register";
 import Login from "../pages/auth/Login";
 import UserDashboard from "../pages/user/Dashboard";
@@ -15,10 +15,10 @@ function AppRoutes() {
       <SessionTimeout />
       <Routes>
 
-        {/* Landing Page */}
+        {/* Root -> Login (single login page) */}
         <Route
           path="/"
-          element={<Home />}
+          element={<Navigate to="/login" replace />}
         />
 
         {/* Authentication */}
