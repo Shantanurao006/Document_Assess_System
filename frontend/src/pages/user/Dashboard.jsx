@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -41,6 +41,8 @@ const [documents, setDocuments] = useState([
                 date: "",
                 approvedBy: "",
                 signature: "",
+                x: 20,
+                y: 20,
                 detailOrder: ["status", "date", "approvedBy", "signature"],
             },
         ],
@@ -48,6 +50,65 @@ const [documents, setDocuments] = useState([
 ]);
 
 const [isSubmitting, setIsSubmitting] = useState(false);
+const [dragging, setDragging] = useState(null);
+const previewRefs = useRef([]);
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const updateApproverPosition = (documentIndex, approverIndex, x, y) => {
+  setDocuments((prev) => {
+    const next = [...prev];
+    if (!next[documentIndex] || !next[documentIndex].approvers[approverIndex]) {
+      return prev;
+    }
+    next[documentIndex] = { ...next[documentIndex] };
+    next[documentIndex].approvers = [...next[documentIndex].approvers];
+    next[documentIndex].approvers[approverIndex] = {
+      ...next[documentIndex].approvers[approverIndex],
+      x,
+      y,
+    };
+    return next;
+  });
+};
+
+const handleDragStart = (documentIndex, approverIndex, event) => {
+  event.preventDefault();
+  const targetRect = event.currentTarget.getBoundingClientRect();
+  setDragging({
+    documentIndex,
+    approverIndex,
+    offsetX: event.clientX - targetRect.left,
+    offsetY: event.clientY - targetRect.top,
+  });
+};
+
+const stopDrag = () => {
+  setDragging(null);
+};
+
+useEffect(() => {
+  const handlePointerMove = (event) => {
+    if (!dragging) return;
+    const previewEl = previewRefs.current[dragging.documentIndex];
+    if (!previewEl) return;
+
+    const previewRect = previewEl.getBoundingClientRect();
+    const x = clamp(event.clientX - previewRect.left - dragging.offsetX, 0, previewRect.width - 220);
+    const y = clamp(event.clientY - previewRect.top - dragging.offsetY, 0, previewRect.height - 140);
+    updateApproverPosition(dragging.documentIndex, dragging.approverIndex, x, y);
+  };
+
+  if (dragging) {
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopDrag);
+  }
+
+  return () => {
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", stopDrag);
+  };
+}, [dragging]);
 
   const handleLogout = () => {
     clearUserSession();
@@ -87,6 +148,8 @@ const [isSubmitting, setIsSubmitting] = useState(false);
             date: "",
             approvedBy: "",
             signature: "",
+            x: 20,
+            y: 20,
             detailOrder: ["status", "date", "approvedBy", "signature"],
           },
         ],
@@ -368,77 +431,81 @@ const handleSubmit = async () => {
                     border: "1px solid #c5d2e8",
                     borderRadius: 3,
                     bgcolor: "#eef4ff",
-                    p: 3,
+                    p: 2,
                     overflow: "hidden",
                   }}
                 >
                   <Box
                     sx={{
-                      position: "absolute",
-                      inset: 0,
-                      p: 3,
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      flexDirection: "column",
-                      gap: 2,
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
                       borderRadius: 3,
-                      bgcolor: "rgba(255,255,255,0.95)",
-                      border: "1px dashed #ccd9eb",
+                      bgcolor: "#fff",
+                      overflow: "hidden",
+                    }}
+                    ref={(el) => {
+                      previewRefs.current[documentIndex] = el;
                     }}
                   >
-                    {document.previewUrl ? (
-                      <img
-                        src={document.previewUrl}
-                        alt={document.file?.name || "Document preview"}
-                        style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 12 }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 1,
-                          width: "100%",
-                          height: "100%",
-                          color: "text.secondary",
-                        }}
-                      >
-                        <UploadFileIcon sx={{ fontSize: 64, color: "primary.main" }} />
-                        <Typography variant="h6" fontWeight="bold" textAlign="center">
-                          {document.file ? document.file.name : "Document preview"}
-                        </Typography>
-                        <Typography variant="body2" textAlign="center">
-                          {document.file ? `Uploaded document placeholder` : "Choose a file to display it here."}
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "column",
+                        gap: 2,
+                        p: 3,
+                      }}
+                    >
+                      {document.previewUrl ? (
+                        <img
+                          src={document.previewUrl}
+                          alt={document.file?.name || "Document preview"}
+                          style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 12 }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 1,
+                            width: "100%",
+                            height: "100%",
+                            color: "text.secondary",
+                          }}
+                        >
+                          <UploadFileIcon sx={{ fontSize: 64, color: "primary.main" }} />
+                          <Typography variant="h6" fontWeight="bold" textAlign="center">
+                            {document.file ? document.file.name : "Document preview"}
+                          </Typography>
+                          <Typography variant="body2" textAlign="center">
+                            {document.file ? `Uploaded document placeholder` : "Choose a file to display it here."}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
 
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 24,
-                      left: 24,
-                      right: 24,
-                      bottom: 24,
-                      display: "grid",
-                      gap: 16,
-                      gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
-                    }}
-                  >
                     {document.approvers.map((approver, approverIndex) => (
                       <Paper
                         key={approverIndex}
-                        elevation={4}
+                        elevation={6}
+                        onPointerDown={(event) => handleDragStart(documentIndex, approverIndex, event)}
                         sx={{
-                          position: "relative",
+                          position: "absolute",
+                          left: `${approver.x}px`,
+                          top: `${approver.y}px`,
+                          width: 220,
                           p: 2,
                           borderRadius: 2,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          bgcolor: "rgba(255,255,255,0.92)",
+                          border: "1px solid rgba(0,0,0,0.12)",
+                          bgcolor: "rgba(255,255,255,0.9)",
+                          cursor: "grab",
+                          userSelect: "none",
                         }}
                       >
                         <Box
@@ -446,15 +513,14 @@ const handleSubmit = async () => {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            flexWrap: "wrap",
                             gap: 1,
-                            mb: 2,
+                            mb: 1,
                           }}
                         >
-                          <Typography variant="subtitle1" fontWeight="bold">
+                          <Typography variant="subtitle2" fontWeight="bold">
                             Signer {approverIndex + 1}
                           </Typography>
-                          <Box sx={{ display: "flex", gap: 1 }}>
+                          <Box sx={{ display: "flex", gap: 0.5 }}>
                             <IconButton
                               size="small"
                               onClick={() => moveApprover(documentIndex, approverIndex, approverIndex - 1)}
@@ -469,13 +535,6 @@ const handleSubmit = async () => {
                             >
                               <ArrowDownwardIcon />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => removeApproverEmail(documentIndex, approverIndex)}
-                            >
-                              <RemoveCircleOutlineIcon />
-                            </IconButton>
                           </Box>
                         </Box>
 
@@ -489,10 +548,11 @@ const handleSubmit = async () => {
                           onChange={(event) =>
                             handleApproverEmailChange(documentIndex, approverIndex, event.target.value)
                           }
+                          size="small"
                         />
 
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
-                          <Box sx={{ flex: 1, minWidth: 120 }}>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                          <Box sx={{ flex: 1, minWidth: 100 }}>
                             <Typography variant="caption" color="text.secondary">
                               Status
                             </Typography>
@@ -500,7 +560,7 @@ const handleSubmit = async () => {
                               {approver.status}
                             </Typography>
                           </Box>
-                          <Box sx={{ flex: 1, minWidth: 120 }}>
+                          <Box sx={{ flex: 1, minWidth: 100 }}>
                             <Typography variant="caption" color="text.secondary">
                               Date
                             </Typography>
@@ -508,27 +568,10 @@ const handleSubmit = async () => {
                               {approver.date || "-"}
                             </Typography>
                           </Box>
-                          <Box sx={{ flex: 1, minWidth: 120 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Approver
-                            </Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                              {approver.approvedBy || "-"}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ flex: 1, minWidth: 120 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Signature
-                            </Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                              {approver.signature || "-"}
-                            </Typography>
-                          </Box>
                         </Box>
                       </Paper>
                     ))}
                   </Box>
-                </Box>
 
                 <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                   <Button
