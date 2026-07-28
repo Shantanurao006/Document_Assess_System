@@ -573,6 +573,7 @@ const handleSubmit = async () => {
                     ))}
                   </Box>
 
+                </Box>
                 <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                   <Button
                     startIcon={<AddCircleOutlineIcon />}
