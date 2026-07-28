@@ -11,11 +11,20 @@ const signPdf = async (
     approvedBy
 ) => {
 
-    const pdfBytes = fs.readFileSync(pdfPath);
+        // Determine output signed path (preserve case-insensitive .pdf)
+        const outputPath = path.join(
+            signedDir,
+            path.basename(pdfPath).replace(/\.pdf$/i, "_signed.pdf")
+        );
 
-    const pdfDoc = await PDFDocument.load(pdfBytes, {
-        ignoreEncryption: true,
-    });
+        // If a signed version already exists, load that first so signatures accumulate.
+        const sourcePath = fs.existsSync(outputPath) ? outputPath : pdfPath;
+
+        const pdfBytes = fs.readFileSync(sourcePath);
+
+        const pdfDoc = await PDFDocument.load(pdfBytes, {
+            ignoreEncryption: true,
+        });
 
     const pages = pdfDoc.getPages();
     const page = pages[pages.length - 1];
@@ -65,11 +74,7 @@ const signPdf = async (
 
     ensureUploadDirectories();
 
-    const outputPath = path.join(
-        signedDir,
-        path.basename(pdfPath).replace(".pdf", "_signed.pdf")
-    );
-
+    // Write back to the same output path so subsequent approvals append to this file.
     fs.writeFileSync(outputPath, signedPdf);
 
     return outputPath;

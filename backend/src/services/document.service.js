@@ -6,9 +6,10 @@ exports.getMyDocuments = async (req, res) => {
 
         const { email } = req.params;
 
+        // Return one entry per uploaded document (group by approval_group_id or stored_file_name)
         const result = await pool.query(
             `
-            SELECT
+            SELECT DISTINCT ON (COALESCE(da.approval_group_id, da.stored_file_name))
                 da.id,
                 da.original_file_name,
                 da.status,
@@ -16,8 +17,7 @@ exports.getMyDocuments = async (req, res) => {
                 da.approved_datetime,
                 da.signed_pdf_name,
                 CASE
-                    WHEN da.status = 'Pending'
-                        AND blocked_by.email IS NOT NULL
+                    WHEN da.status = 'Pending' AND blocked_by.email IS NOT NULL
                         THEN 'Pending approval from ' || blocked_by.email
                     WHEN da.status = 'Pending'
                         THEN 'Pending approval from ' || assigned_user.email
@@ -46,7 +46,7 @@ exports.getMyDocuments = async (req, res) => {
                 LIMIT 1
             ) blocked_by ON true
             WHERE uploaded_user.email = $1
-            ORDER BY da.assigned_datetime DESC, da.approval_order ASC
+            ORDER BY COALESCE(da.approval_group_id, da.stored_file_name), da.approval_order DESC, da.assigned_datetime DESC
             `,
             [email]
         );
