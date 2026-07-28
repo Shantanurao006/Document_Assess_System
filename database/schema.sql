@@ -59,8 +59,12 @@ CREATE TABLE document_assignments (
 
     uploaded_by INTEGER NOT NULL,
     assigned_to INTEGER NOT NULL,
+    approval_group_id VARCHAR(255),
+    approval_order INTEGER NOT NULL DEFAULT 1,
+    approved_by INTEGER,
 
     signed_by_image VARCHAR(255),
+    signed_pdf_name VARCHAR(255),
 
     remarks TEXT,
 
@@ -72,7 +76,12 @@ CREATE TABLE document_assignments (
     CONSTRAINT fk_assigned_to
         FOREIGN KEY (assigned_to)
         REFERENCES users(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_approved_by
+        FOREIGN KEY (approved_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL
 );
 
 -- ============================================
@@ -93,3 +102,6 @@ ON document_assignments(assigned_to);
 
 CREATE INDEX idx_assignments_status
 ON document_assignments(status);
+
+CREATE INDEX idx_assignments_approval_order
+ON document_assignments(uploaded_by, approval_group_id, approval_order);

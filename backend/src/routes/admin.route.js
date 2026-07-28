@@ -24,11 +24,21 @@ router.get("/documents/:adminId", async (req, res) => {
                 da.stored_file_name,
                 da.assigned_datetime,
                 da.status,
+                da.approval_order,
                 u.email AS uploaded_by_email
             FROM document_assignments da
             INNER JOIN users u
                 ON da.uploaded_by = u.id
             WHERE da.assigned_to = $1
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM document_assignments previous_da
+                    WHERE previous_da.uploaded_by = da.uploaded_by
+                        AND COALESCE(previous_da.approval_group_id, previous_da.stored_file_name)
+                            = COALESCE(da.approval_group_id, da.stored_file_name)
+                        AND previous_da.approval_order < da.approval_order
+                        AND previous_da.status <> 'Approved'
+                )
             ORDER BY da.assigned_datetime DESC
             `,
             [adminId]

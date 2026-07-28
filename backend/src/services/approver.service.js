@@ -50,10 +50,15 @@ if (adminResult.rows.length === 0) {
 }
 
 const admin = adminResult.rows[0];
-    // Get document details
+    // Get assignment details
     const result = await pool.query(
         `
-        SELECT stored_file_name
+        SELECT
+            stored_file_name,
+            approval_group_id,
+            uploaded_by,
+            approval_order,
+            assigned_to
         FROM document_assignments
         WHERE id = $1
         `,
@@ -64,7 +69,39 @@ const admin = adminResult.rows[0];
         throw new Error("Document not found.");
     }
 
-    const storedFileName = result.rows[0].stored_file_name;
+    const assignment = result.rows[0];
+
+    if (assignment.assigned_to !== admin.id) {
+        throw new Error("This document is not assigned to this approver.");
+    }
+
+    const previousApprovals = await pool.query(
+        `
+        SELECT u.email
+        FROM document_assignments da
+        INNER JOIN users u
+            ON da.assigned_to = u.id
+        WHERE da.uploaded_by = $1
+            AND COALESCE(da.approval_group_id, da.stored_file_name) = $2
+            AND da.approval_order < $3
+            AND da.status <> 'Approved'
+        ORDER BY da.approval_order ASC
+        LIMIT 1
+        `,
+        [
+            assignment.uploaded_by,
+            assignment.approval_group_id || assignment.stored_file_name,
+            assignment.approval_order,
+        ]
+    );
+
+    if (previousApprovals.rows.length > 0) {
+        throw new Error(
+            `Pending approval from ${previousApprovals.rows[0].email}.`
+        );
+    }
+
+    const storedFileName = assignment.stored_file_name;
 
     const originalPdfPath = path.join(
         __dirname,

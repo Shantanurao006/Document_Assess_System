@@ -111,6 +111,8 @@ for (let i = 0; i < req.files.length; i++) {
         path: file.path,
     });
 
+    const approvalGroupId = `${Date.now()}-${i}-${file.filename}`;
+
     const uploadedByUser = await pool.query(
         "SELECT id FROM users WHERE email=$1",
         [uploadedBy]
@@ -119,7 +121,8 @@ for (let i = 0; i < req.files.length; i++) {
         throw new Error("Uploaded user not found.");
     }
 
-    for (const approverEmail of approversByFile[i]) {
+    for (let approvalIndex = 0; approvalIndex < approversByFile[i].length; approvalIndex++) {
+        const approverEmail = approversByFile[i][approvalIndex];
         const approverUser = await pool.query(
             "SELECT id FROM users WHERE email=$1",
             [approverEmail]
@@ -137,16 +140,20 @@ for (let i = 0; i < req.files.length; i++) {
                 stored_file_name,
                 uploaded_by,
                 assigned_to,
+                approval_group_id,
+                approval_order,
                 status
             )
             VALUES
-            ($1,$2,$3,$4,$5)
+            ($1,$2,$3,$4,$5,$6,$7)
             `,
             [
                 file.originalname,
                 file.filename,
                 uploadedByUser.rows[0].id,
                 approverUser.rows[0].id,
+                approvalGroupId,
+                approvalIndex + 1,
                 "Pending",
             ]
         );
