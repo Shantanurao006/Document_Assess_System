@@ -111,9 +111,18 @@ return (
           Document Approval System
         </Typography>
 
-        <Typography sx={{ mr: 3 }}>
-          {user?.email}
-        </Typography>
+        <Typography sx={{ mr: 3 }}>{user?.email}</Typography>
+
+        {user?.role === "ADMIN" && (
+          <Button
+            variant="outlined"
+            color="inherit"
+            sx={{ mr: 2, color: "#fff", borderColor: "#fff" }}
+            onClick={() => navigate("/register")}
+          >
+            Register
+          </Button>
+        )}
 
         <Button
           color="inherit"

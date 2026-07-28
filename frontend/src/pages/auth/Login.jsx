@@ -84,14 +84,16 @@ function Login() {
       alignItems="center"
       minHeight="100vh"
       sx={{
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%)",
+        p: 2,
       }}
     >
       <Paper
         elevation={5}
         sx={{
-          width: 420,
-          p: 4,
+          width: { xs: "100%", sm: 480 },
+          maxWidth: 600,
+          p: { xs: 3, sm: 6 },
           borderRadius: 3,
         }}
       >

@@ -47,18 +47,7 @@ function Home() {
           Login
         </Button>
 
-        <Typography sx={{ mt: 4, mb: 2 }}>
-          Don't have an account?
-        </Typography>
-
-        <Button
-          fullWidth
-          variant="outlined"
-          size="large"
-          onClick={() => navigate("/register")}
-        >
-          Register
-        </Button>
+        {/* Registration is restricted to Admins only. Public register button removed. */}
       </Paper>
     </Box>
   );

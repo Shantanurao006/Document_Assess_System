@@ -169,22 +169,32 @@ const handleSubmit = async () => {
             Document Approval System
           </Typography>
           <Typography sx={{ mr: 3 }}>{user?.email}</Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            sx={{ mr: 2 }}
-            onClick={() => navigate("/user/my-documents")}
-          >
-            My Documents
-          </Button>
-          <Button
-            variant="outlined"
-            color="inherit"
-            sx={{ color: "#fff", borderColor: "#fff" }}
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
+            {user?.role === "ADMIN" && (
+              <Button
+                variant="outlined"
+                color="inherit"
+                sx={{ mr: 2, color: "#fff", borderColor: "#fff" }}
+                onClick={() => navigate("/register")}
+              >
+                Register
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              color="secondary"
+              sx={{ mr: 2 }}
+              onClick={() => navigate("/user/my-documents")}
+            >
+              My Documents
+            </Button>
+            <Button
+              variant="outlined"
+              color="inherit"
+              sx={{ color: "#fff", borderColor: "#fff" }}
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
         </Toolbar>
       </AppBar>
 
