@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
 const fs = require("fs");
+const { ensureUploadDirectories, uploadsDir } = require("./config/uploadPaths");
 
 
 require("dotenv").config();
@@ -42,7 +43,9 @@ app.use(
 // ----------------------
 // Uploads Directory
 // ----------------------
-const uploadsPath = path.join(__dirname, "uploads");
+ensureUploadDirectories();
+
+const uploadsPath = uploadsDir;
 
 console.log("======================================");
 console.log("Uploads Path :", uploadsPath);

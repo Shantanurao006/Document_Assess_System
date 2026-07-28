@@ -4,11 +4,14 @@ const path = require("path");
 const fs = require("fs");
 
 const pool = require("../config/db");
+const { ensureUploadDirectories, uploadsDir } = require("../config/uploadPaths");
 
 const router = express.Router();
 
 // Create uploads folder automatically if it doesn't exist
-const uploadDir = path.join(__dirname, "../uploads");
+ensureUploadDirectories();
+
+const uploadDir = uploadsDir;
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });

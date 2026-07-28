@@ -1,18 +1,13 @@
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const { ensureUploadDirectories, signaturesDir } = require("../config/uploadPaths");
 
-const uploadDir = path.join(__dirname, "../uploads/signatures");
-
-// Create folder if it doesn't exist
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+ensureUploadDirectories();
 
 const storage = multer.diskStorage({
 
     destination: (req, file, cb) => {
-        cb(null, uploadDir);
+        cb(null, signaturesDir);
     },
 
     filename: (req, file, cb) => {

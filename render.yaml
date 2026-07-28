@@ -1,5 +1,19 @@
 services:
   - type: web
+    name: document-assess-system
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+    disk:
+      name: document-uploads
+      mountPath: /var/data
+      sizeGB: 1
+
+  - type: web
     name: document-approval-frontend
     runtime: static
     rootDir: frontend

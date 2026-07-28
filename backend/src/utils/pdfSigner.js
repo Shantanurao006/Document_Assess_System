@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
+const { ensureUploadDirectories, signedDir } = require("../config/uploadPaths");
 
 const signPdf = async (
     pdfPath,
@@ -62,14 +63,10 @@ const signPdf = async (
 
     const signedPdf = await pdfDoc.save();
 
-    const signedFolder = path.join(__dirname, "../uploads", "signed");
-
-    if (!fs.existsSync(signedFolder)) {
-        fs.mkdirSync(signedFolder, { recursive: true });
-    }
+    ensureUploadDirectories();
 
     const outputPath = path.join(
-        signedFolder,
+        signedDir,
         path.basename(pdfPath).replace(".pdf", "_signed.pdf")
     );
 

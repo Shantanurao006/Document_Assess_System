@@ -3,6 +3,7 @@ const pool = require("../config/db");
 const path = require("path");
 const fs = require("fs");
 const signPdf = require("../utils/pdfSigner");
+const { uploadsDir, signaturesDir } = require("../config/uploadPaths");
 
 const validateApprover = async (email) => {
 
@@ -29,6 +30,12 @@ const approveDocument = async (body, file) => {
     approvalDateTime,
     approvedBy,
 } = body;
+
+if (!file) {
+    const error = new Error("Please upload your signature again.");
+    error.statusCode = 400;
+    throw error;
+}
 
 console.log("===============");
 console.log("Approve Body:", body);
@@ -96,23 +103,22 @@ const admin = adminResult.rows[0];
     );
 
     if (previousApprovals.rows.length > 0) {
-        throw new Error(
+        const error = new Error(
             `Pending approval from ${previousApprovals.rows[0].email}.`
         );
+        error.statusCode = 400;
+        throw error;
     }
 
     const storedFileName = assignment.stored_file_name;
 
     const originalPdfPath = path.join(
-        __dirname,
-        "../uploads",
+        uploadsDir,
         storedFileName
     );
 
     const uploadedSignaturePath = path.join(
-    __dirname,
-    "../uploads",
-    "signatures",
+    signaturesDir,
     file.filename
 );
 
@@ -130,16 +136,24 @@ console.log(
 );
 
 if (!fs.existsSync(uploadedSignaturePath)) {
-    throw new Error(
-        `Signature file not found: ${uploadedSignaturePath}`
+    const error = new Error(
+        "Signature file not found. Please upload the signature again."
     );
+    error.statusCode = 400;
+    throw error;
 }
 
+if (!fs.existsSync(originalPdfPath)) {
+    const error = new Error(
+        "Original uploaded document is missing from the server. Please upload the document again."
+    );
+    error.statusCode = 400;
+    throw error;
+}
 
 console.log("PDF Path:", originalPdfPath);
 console.log("PDF Exists:", fs.existsSync(originalPdfPath));
 
-const uploadsDir = path.join(__dirname, "../uploads");
 console.log("Files in uploads:", fs.readdirSync(uploadsDir));
 
 const signedPdfPath = await signPdf(

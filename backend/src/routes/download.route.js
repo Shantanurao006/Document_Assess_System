@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const pool = require("../config/db");
+const { signedDir } = require("../config/uploadPaths");
 
 const router = express.Router();
 
@@ -38,9 +39,7 @@ router.get(
             }
 
             const filePath = path.join(
-                __dirname,
-                "../uploads",
-                "signed",
+                signedDir,
                 signedPdf
             );
 
