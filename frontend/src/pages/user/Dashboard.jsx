@@ -422,7 +422,10 @@ const handleSubmit = async () => {
                       Choose File
                       <input
                         hidden
+                        id={`document-file-${documentIndex}`}
+                        name={`documentFile_${documentIndex}`}
                         type="file"
+                        accept="application/pdf,image/*"
                         onChange={(event) => handleFileChange(documentIndex, event)}
                       />
                     </Button>
@@ -598,8 +601,11 @@ const handleSubmit = async () => {
                         </Box>
 
                         <TextField
+                          id={`approver-email-${documentIndex}-${approverIndex}`}
+                          name={`approverEmail_${documentIndex}_${approverIndex}`}
                           label="Signer Email"
                           type="email"
+                          autoComplete="email"
                           fullWidth
                           required
                           placeholder="Enter Admin Email"
