@@ -316,12 +316,32 @@ const handleSubmit = async () => {
             {documents.map((document, documentIndex) => (
               <Paper
                 key={documentIndex}
-                elevation={2}
-                sx={{ p: 3, borderRadius: 2 }}
+                elevation={3}
+                sx={{ p: 3, borderRadius: 3 }}
               >
-                <Stack spacing={2}>
-                  <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-                    <Button variant="outlined" component="label" sx={{ minWidth: 140 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 2,
+                    mb: 2,
+                  }}
+                >
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      {document.file ? document.file.name : `Document ${documentIndex + 1}`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {document.file
+                        ? `${(document.file.size / 1024).toFixed(2)} KB • ${document.file.type || "Unknown"}`
+                        : "Choose a file to attach to this document."}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    <Button variant="outlined" component="label">
                       Choose File
                       <input
                         hidden
@@ -329,80 +349,120 @@ const handleSubmit = async () => {
                         onChange={(event) => handleFileChange(documentIndex, event)}
                       />
                     </Button>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexGrow: 1, flexWrap: "wrap" }}>
-                      <UploadFileIcon sx={{ fontSize: 40, color: "primary.main" }} />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography fontWeight="bold" noWrap>
-                          {document.file ? document.file.name : "No file selected"}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {document.file ? `${(document.file.size / 1024).toFixed(2)} KB` : "Select a file to upload"}
-                        </Typography>
-                      </Box>
-                    </Box>
+                    {documents.length > 1 && (
+                      <Button
+                        color="error"
+                        variant="contained"
+                        onClick={() => handleRemoveFile(documentIndex)}
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </Box>
+                </Box>
 
-                  <Paper
-                    elevation={0}
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    border: "1px dashed #ccc",
+                    borderRadius: 2,
+                    bgcolor: "#f3f7ff",
+                  }}
+                >
+                  <Box
                     sx={{
-                      p: 3,
-                      border: "1px dashed #ccc",
-                      borderRadius: 3,
-                      backgroundColor: "#f9fbff",
-                      mb: 2,
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      gap: 2,
+                      alignItems: "center",
                     }}
                   >
-                    <Typography variant="subtitle1" color="text.primary" gutterBottom>
-                      Attached Document Preview
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, alignItems: "center" }}>
-                      <Box sx={{ width: { xs: "100%", sm: 140 }, height: 140, borderRadius: 2, backgroundColor: "#fff", border: "1px solid #dde3f0", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                        <UploadFileIcon sx={{ fontSize: 48, color: "primary.main" }} />
-                      </Box>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
-                        {document.file ? (
-                          <>
-                            <Typography variant="subtitle2" fontWeight="bold" noWrap>
-                              {document.file.name}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {`Size: ${(document.file.size / 1024).toFixed(2)} KB`}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {`Type: ${document.file.type || "Unknown"}`}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              The signature details and approval metadata will appear in the boxes below.
-                            </Typography>
-                          </>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            Choose a file to show the document preview area and the approval metadata boxes below.
-                          </Typography>
-                        )}
-                      </Box>
+                    <Box
+                      sx={{
+                        width: 140,
+                        height: 140,
+                        borderRadius: 2,
+                        bgcolor: "#fff",
+                        border: "1px solid #dde3f0",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <UploadFileIcon sx={{ fontSize: 48, color: "primary.main" }} />
                     </Box>
-                  </Paper>
+                    <Box sx={{ minWidth: 0 }}>
+                      {document.file ? (
+                        <>
+                          <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                            {document.file.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Size: {(document.file.size / 1024).toFixed(2)} KB
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Type: {document.file.type || "Unknown"}
+                          </Typography>
+                        </>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          Select a file to attach it to this document card.
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Paper>
 
+                <Stack spacing={2}>
                   {document.approvers.map((approver, approverIndex) => (
                     <Paper
                       key={approverIndex}
                       elevation={1}
                       sx={{
                         p: 2,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2,
-                        border: "1px solid #ddd",
                         borderRadius: 2,
-                        backgroundColor: "#fafafa",
+                        border: "1px solid #ddd",
+                        bgcolor: "#fafafa",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <DragIndicatorIcon sx={{ color: "text.secondary" }} />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
                         <Typography variant="subtitle1" fontWeight="bold">
                           Approver {approverIndex + 1}
                         </Typography>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => moveApprover(documentIndex, approverIndex, approverIndex - 1)}
+                            disabled={approverIndex === 0}
+                          >
+                            <ArrowUpwardIcon />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => moveApprover(documentIndex, approverIndex, approverIndex + 1)}
+                            disabled={approverIndex === document.approvers.length - 1}
+                          >
+                            <ArrowDownwardIcon />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => removeApproverEmail(documentIndex, approverIndex)}
+                          >
+                            <RemoveCircleOutlineIcon />
+                          </IconButton>
+                        </Box>
                       </Box>
 
                       <TextField
@@ -413,31 +473,44 @@ const handleSubmit = async () => {
                         placeholder="Enter Admin Email"
                         value={approver.email}
                         onChange={(event) =>
-                          handleApproverEmailChange(
-                            documentIndex,
-                            approverIndex,
-                            event.target.value
-                          )
+                          handleApproverEmailChange(documentIndex, approverIndex, event.target.value)
                         }
                       />
 
-                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, gap: 2 }}>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+                          gap: 2,
+                          mt: 2,
+                        }}
+                      >
                         {approver.detailOrder.map((detailKey, detailIndex) => {
                           const detailMap = {
                             status: {
                               title: "Status",
                               value: approver.status,
-                              caption: "Approved/Rejected status",
+                              caption: "Approved / Rejected",
                             },
                             date: {
-                              title: approver.status === "Approved" ? "Approved On" : approver.status === "Rejected" ? "Rejected On" : "Status Date",
+                              title:
+                                approver.status === "Approved"
+                                  ? "Approved On"
+                                  : approver.status === "Rejected"
+                                  ? "Rejected On"
+                                  : "Status Date",
                               value: approver.date || "-",
-                              caption: "Timestamp when status changed",
+                              caption: "Timestamp",
                             },
                             approvedBy: {
-                              title: approver.status === "Approved" ? "Approved By" : approver.status === "Rejected" ? "Rejected By" : "Approver",
+                              title:
+                                approver.status === "Approved"
+                                  ? "Approved By"
+                                  : approver.status === "Rejected"
+                                  ? "Rejected By"
+                                  : "Approver",
                               value: approver.approvedBy || "-",
-                              caption: "Admin who approved/rejected",
+                              caption: "Admin assigned",
                             },
                             signature: {
                               title: "Signature",
@@ -447,7 +520,6 @@ const handleSubmit = async () => {
                           };
 
                           const detail = detailMap[detailKey];
-
                           return (
                             <Paper
                               key={detailKey}
@@ -456,31 +528,13 @@ const handleSubmit = async () => {
                                 p: 2,
                                 border: "1px solid #ddd",
                                 borderRadius: 2,
-                                backgroundColor: "#fff",
+                                bgcolor: "#fff",
                               }}
                             >
-                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                                <Typography variant="caption" color="text.secondary">
-                                  {detail.title}
-                                </Typography>
-                                <Box>
-                                  <IconButton
-                                    aria-label="Move up"
-                                    size="small"
-                                    onClick={() => moveDetail(documentIndex, approverIndex, detailIndex, -1)}
-                                  >
-                                    <ArrowUpwardIcon fontSize="small" />
-                                  </IconButton>
-                                  <IconButton
-                                    aria-label="Move down"
-                                    size="small"
-                                    onClick={() => moveDetail(documentIndex, approverIndex, detailIndex, 1)}
-                                  >
-                                    <ArrowDownwardIcon fontSize="small" />
-                                  </IconButton>
-                                </Box>
-                              </Box>
-                              <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+                              <Typography variant="caption" color="text.secondary">
+                                {detail.title}
+                              </Typography>
+                              <Typography variant="body2" fontWeight="bold" sx={{ mt: 1 }}>
                                 {detail.value}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
@@ -490,53 +544,15 @@ const handleSubmit = async () => {
                           );
                         })}
                       </Box>
-
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <IconButton
-                          aria-label="Move up"
-                          size="small"
-                          onClick={() => moveApprover(documentIndex, approverIndex, approverIndex - 1)}
-                        >
-                          <ArrowUpwardIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label="Move down"
-                          size="small"
-                          onClick={() => moveApprover(documentIndex, approverIndex, approverIndex + 1)}
-                        >
-                          <ArrowDownwardIcon />
-                        </IconButton>
-                        <IconButton
-                          aria-label="Remove approver"
-                          color="error"
-                          onClick={() => removeApproverEmail(documentIndex, approverIndex)}
-                        >
-                          <RemoveCircleOutlineIcon />
-                        </IconButton>
-                      </Box>
                     </Paper>
                   ))}
 
-                  <Box>
-                    <Button
-                      startIcon={<AddCircleOutlineIcon />}
-                      onClick={() => addApproverEmail(documentIndex)}
-                    >
-                      Add approver
-                    </Button>
-                  </Box>
-
-                  {documents.length > 1 && (
-                    <Box>
-                      <Button
-                        color="error"
-                        variant="contained"
-                        onClick={() => handleRemoveFile(documentIndex)}
-                      >
-                        Remove document
-                      </Button>
-                    </Box>
-                  )}
+                  <Button
+                    startIcon={<AddCircleOutlineIcon />}
+                    onClick={() => addApproverEmail(documentIndex)}
+                  >
+                    Add approver
+                  </Button>
                 </Stack>
               </Paper>
             ))}
