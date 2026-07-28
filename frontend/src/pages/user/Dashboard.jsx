@@ -462,11 +462,52 @@ const handleSubmit = async () => {
                       }}
                     >
                       {document.previewUrl ? (
-                        <iframe
-                          title={document.file?.name || "Document preview"}
-                          src={document.previewUrl}
-                          style={{ width: "100%", height: "100%", border: "none" }}
-                        />
+                        document.file?.type.startsWith("image/") ? (
+                          <img
+                            src={document.previewUrl}
+                            alt={document.file?.name || "Document preview"}
+                            style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 12 }}
+                          />
+                        ) : (
+                          <object
+                            data={document.previewUrl}
+                            type={document.file?.type || "application/pdf"}
+                            width="100%"
+                            height="100%"
+                            style={{ border: "none" }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 1,
+                                width: "100%",
+                                height: "100%",
+                                color: "text.secondary",
+                                p: 2,
+                              }}
+                            >
+                              <UploadFileIcon sx={{ fontSize: 64, color: "primary.main" }} />
+                              <Typography variant="h6" fontWeight="bold" textAlign="center">
+                                {document.file?.name || "Document preview"}
+                              </Typography>
+                              <Typography variant="body2" textAlign="center">
+                                Preview not available in this browser. Open the file manually below.
+                              </Typography>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                href={document.previewUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Open file in new tab
+                              </Button>
+                            </Box>
+                          </object>
+                        )
                       ) : (
                         <Box
                           sx={{
@@ -486,7 +527,7 @@ const handleSubmit = async () => {
                           </Typography>
                           <Typography variant="body2" textAlign="center">
                             {document.file
-                              ? `Uploaded file preview is unavailable for this format.`
+                              ? `Choose another supported file type if preview fails.`
                               : "Choose a file to display it here."}
                           </Typography>
                         </Box>
