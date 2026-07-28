@@ -30,6 +30,30 @@ const ensureSchema = async () => {
         CREATE INDEX IF NOT EXISTS idx_assignments_approval_order
         ON document_assignments(uploaded_by, approval_group_id, approval_order);
     `);
+
+    await pool.query(`
+        UPDATE document_assignments
+        SET approval_group_id = 'legacy-' || uploaded_by || '-' || stored_file_name
+        WHERE approval_group_id IS NULL;
+    `);
+
+    await pool.query(`
+        WITH ordered_assignments AS (
+            SELECT
+                id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY approval_group_id
+                    ORDER BY id
+                ) AS next_approval_order
+            FROM document_assignments
+        )
+        UPDATE document_assignments da
+        SET approval_order = ordered_assignments.next_approval_order
+        FROM ordered_assignments
+        WHERE da.id = ordered_assignments.id
+            AND da.approval_order = 1
+            AND ordered_assignments.next_approval_order > 1;
+    `);
 };
 
 module.exports = ensureSchema;
