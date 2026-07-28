@@ -18,9 +18,13 @@ export const uploadDocuments = async (
             );
         }
 
+        const approverEmails = (document.approvers || []).map(
+            (approver) => approver.email
+        );
+
         formData.append(
             "approverEmails",
-            JSON.stringify(document.approverEmails)
+            JSON.stringify(approverEmails)
         );
     });
 

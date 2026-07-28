@@ -9,6 +9,7 @@ import {
   Button,
   Stack,
   TextField,
+  IconButton,
 } from "@mui/material";
 
 
@@ -18,7 +19,12 @@ import { clearUserSession, getStoredUser } from "../../auth/session";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutlined";
-import IconButton from "@mui/material/IconButton";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 function UserDashboard() {
   const navigate = useNavigate();
@@ -27,10 +33,19 @@ function UserDashboard() {
 const [documents, setDocuments] = useState([
     {
         file: null,
-        approverEmails: [""],
+        approvers: [
+            {
+                email: "",
+                status: "Pending",
+                date: "",
+                approvedBy: "",
+                signature: "",
+            },
+        ],
     },
 ]);
 
+const [draggedApprover, setDraggedApprover] = useState(null);
 const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = () => {
@@ -51,7 +66,15 @@ const [isSubmitting, setIsSubmitting] = useState(false);
       ...documents,
       {
         file: null,
-        approverEmails: [""],
+        approvers: [
+          {
+            email: "",
+            status: "Pending",
+            date: "",
+            approvedBy: "",
+            signature: "",
+          },
+        ],
       },
     ]);
   };
@@ -62,7 +85,15 @@ const [isSubmitting, setIsSubmitting] = useState(false);
     if (updatedDocuments.length === 0) {
       updatedDocuments.push({
         file: null,
-        approverEmails: [""],
+        approvers: [
+          {
+            email: "",
+            status: "Pending",
+            date: "",
+            approvedBy: "",
+            signature: "",
+          },
+        ],
       });
     }
 
@@ -72,32 +103,75 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleApproverEmailChange = (
   documentIndex,
-  emailIndex,
+  approverIndex,
   value
 ) => {
   const updatedDocuments = [...documents];
-  updatedDocuments[documentIndex].approverEmails[emailIndex] = value;
+  updatedDocuments[documentIndex].approvers[approverIndex].email = value;
   setDocuments(updatedDocuments);
 };
 
 const addApproverEmail = (documentIndex) => {
   const updatedDocuments = [...documents];
 
-  updatedDocuments[documentIndex].approverEmails.push("");
+  updatedDocuments[documentIndex].approvers.push({
+    email: "",
+    status: "Pending",
+    date: "",
+    approvedBy: "",
+    signature: "",
+  });
 
   setDocuments(updatedDocuments);
 };
 
-const removeApproverEmail = (documentIndex, emailIndex) => {
+const removeApproverEmail = (documentIndex, approverIndex) => {
   const updatedDocuments = [...documents];
 
-  updatedDocuments[documentIndex].approverEmails.splice(emailIndex, 1);
+  updatedDocuments[documentIndex].approvers.splice(approverIndex, 1);
 
-  if (updatedDocuments[documentIndex].approverEmails.length === 0) {
-    updatedDocuments[documentIndex].approverEmails.push("");
+  if (updatedDocuments[documentIndex].approvers.length === 0) {
+    updatedDocuments[documentIndex].approvers.push({
+      email: "",
+      status: "Pending",
+      date: "",
+      approvedBy: "",
+      signature: "",
+    });
   }
 
   setDocuments(updatedDocuments);
+};
+
+const moveApprover = (documentIndex, fromIndex, toIndex) => {
+  if (toIndex < 0 || toIndex >= documents[documentIndex].approvers.length) {
+    return;
+  }
+
+  const updatedDocuments = [...documents];
+  const approvers = [...updatedDocuments[documentIndex].approvers];
+  const [moved] = approvers.splice(fromIndex, 1);
+  approvers.splice(toIndex, 0, moved);
+  updatedDocuments[documentIndex].approvers = approvers;
+  setDocuments(updatedDocuments);
+};
+
+const handleDragStart = (documentIndex, approverIndex) => {
+  setDraggedApprover({ documentIndex, approverIndex });
+};
+
+const handleDrop = (documentIndex, targetIndex) => {
+  if (!draggedApprover) return;
+
+  const { documentIndex: fromDoc, approverIndex: fromIndex } = draggedApprover;
+  if (fromDoc !== documentIndex) return;
+
+  moveApprover(documentIndex, fromIndex, targetIndex);
+  setDraggedApprover(null);
+};
+
+const handleDragOver = (event) => {
+  event.preventDefault();
 };
 
 const handleSubmit = async () => {
@@ -120,8 +194,8 @@ const handleSubmit = async () => {
                 return;
             }
 
-            for (const approverEmail of document.approverEmails) {
-                const email = approverEmail.trim();
+            for (const approver of document.approvers) {
+                const email = approver.email.trim();
 
                 if (!email) {
                     alert(`Please enter approver email for Document ${i + 1}.`);
@@ -147,7 +221,15 @@ const handleSubmit = async () => {
         setDocuments([
             {
                 file: null,
-                approverEmails: [""],
+                approvers: [
+                    {
+                        email: "",
+                        status: "Pending",
+                        date: "",
+                        approvedBy: "",
+                        signature: "",
+                    },
+                ],
             },
         ]);
 
@@ -233,31 +315,138 @@ const handleSubmit = async () => {
                     </Typography>
                   </Box>
 
-                  {document.approverEmails.map((email, emailIndex) => (
-                    <Box key={emailIndex} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {document.approvers.map((approver, approverIndex) => (
+                    <Paper
+                      key={approverIndex}
+                      elevation={1}
+                      sx={{
+                        p: 2,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                        border: "1px solid #ddd",
+                        borderRadius: 2,
+                        backgroundColor: "#fafafa",
+                      }}
+                      draggable
+                      onDragStart={() => handleDragStart(documentIndex, approverIndex)}
+                      onDragOver={handleDragOver}
+                      onDrop={() => handleDrop(documentIndex, approverIndex)}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <DragIndicatorIcon sx={{ color: "text.secondary" }} />
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          Approver {approverIndex + 1}
+                        </Typography>
+                      </Box>
+
                       <TextField
-                        label={`Approver Email ${emailIndex + 1}`}
+                        label="Approver Email"
                         type="email"
                         fullWidth
                         required
                         placeholder="Enter Admin Email"
-                        value={email}
+                        value={approver.email}
                         onChange={(event) =>
                           handleApproverEmailChange(
                             documentIndex,
-                            emailIndex,
+                            approverIndex,
                             event.target.value
                           )
                         }
                       />
-                      <IconButton
-                        aria-label="Remove approver"
-                        color="error"
-                        onClick={() => removeApproverEmail(documentIndex, emailIndex)}
-                      >
-                        <RemoveCircleOutlineIcon />
-                      </IconButton>
-                    </Box>
+
+                      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 2 }}>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            border: "1px solid #ddd",
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            Status
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {approver.status}
+                          </Typography>
+                        </Paper>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            border: "1px solid #ddd",
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            {approver.status === "Approved" ? "Approved On" : approver.status === "Rejected" ? "Rejected On" : "Status Date"}
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {approver.date || "-"}
+                          </Typography>
+                        </Paper>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            border: "1px solid #ddd",
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            {approver.status === "Approved" ? "Approved By" : approver.status === "Rejected" ? "Rejected By" : "Approver"}
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {approver.approvedBy || "-"}
+                          </Typography>
+                        </Paper>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            border: "1px solid #ddd",
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            Signature
+                          </Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {approver.signature || "-"}
+                          </Typography>
+                        </Paper>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <IconButton
+                          aria-label="Move up"
+                          size="small"
+                          onClick={() => moveApprover(documentIndex, approverIndex, approverIndex - 1)}
+                        >
+                          <ArrowUpwardIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="Move down"
+                          size="small"
+                          onClick={() => moveApprover(documentIndex, approverIndex, approverIndex + 1)}
+                        >
+                          <ArrowDownwardIcon />
+                        </IconButton>
+                        <IconButton
+                          aria-label="Remove approver"
+                          color="error"
+                          onClick={() => removeApproverEmail(documentIndex, approverIndex)}
+                        >
+                          <RemoveCircleOutlineIcon />
+                        </IconButton>
+                      </Box>
+                    </Paper>
                   ))}
 
                   <Box>
