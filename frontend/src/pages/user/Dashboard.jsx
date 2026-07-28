@@ -25,6 +25,10 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import { Document, Page, pdfjs } from "react-pdf";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 function UserDashboard() {
   const navigate = useNavigate();
@@ -469,44 +473,14 @@ const handleSubmit = async () => {
                             style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 12 }}
                           />
                         ) : (
-                          <object
-                            data={document.previewUrl}
-                            type={document.file?.type || "application/pdf"}
-                            width="100%"
-                            height="100%"
-                            style={{ border: "none" }}
+                          <Document
+                            file={document.previewUrl}
+                            onLoadSuccess={() => null}
+                            loading={<Typography>Loading document...</Typography>}
+                            error={<Typography color="error">Unable to load preview.</Typography>}
                           >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 1,
-                                width: "100%",
-                                height: "100%",
-                                color: "text.secondary",
-                                p: 2,
-                              }}
-                            >
-                              <UploadFileIcon sx={{ fontSize: 64, color: "primary.main" }} />
-                              <Typography variant="h6" fontWeight="bold" textAlign="center">
-                                {document.file?.name || "Document preview"}
-                              </Typography>
-                              <Typography variant="body2" textAlign="center">
-                                Preview not available in this browser. Open the file manually below.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                size="small"
-                                href={document.previewUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Open file in new tab
-                              </Button>
-                            </Box>
-                          </object>
+                            <Page pageNumber={1} width={800} />
+                          </Document>
                         )
                       ) : (
                         <Box
