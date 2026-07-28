@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import API, { API_BASE_URL } from "../../api/api";
+import { clearUserSession, getStoredUser } from "../../auth/session";
 import {
   AppBar,
   Toolbar,
@@ -52,7 +53,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 function AdminDashboard() {
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = getStoredUser();
 
   const [documents, setDocuments] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -106,7 +107,7 @@ const onDocumentLoadSuccess = ({ numPages }) => {
 };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    clearUserSession();
     navigate("/");
   };
 

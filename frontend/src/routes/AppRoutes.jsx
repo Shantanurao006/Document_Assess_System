@@ -6,10 +6,13 @@ import Login from "../pages/auth/Login";
 import UserDashboard from "../pages/user/Dashboard";
 import MyDocuments from "../pages/user/MyDocuments";
 import AdminDashboard from "../pages/admin/Dashboard";
+import ProtectedRoute from "../auth/ProtectedRoute";
+import SessionTimeout from "../auth/SessionTimeout";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <SessionTimeout />
       <Routes>
 
         {/* Landing Page */}
@@ -32,17 +35,29 @@ function AppRoutes() {
         {/* Dashboards */}
         <Route
     path="/user/dashboard"
-    element={<UserDashboard />}
+    element={
+      <ProtectedRoute allowedRoles={["USER"]}>
+        <UserDashboard />
+      </ProtectedRoute>
+    }
 />
 
 <Route
     path="/user/my-documents"
-    element={<MyDocuments />}
+    element={
+      <ProtectedRoute allowedRoles={["USER"]}>
+        <MyDocuments />
+      </ProtectedRoute>
+    }
 />
 
         <Route
           path="/admin/dashboard"
-          element={<AdminDashboard />}
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
         />
 
         {/* Invalid Route */}

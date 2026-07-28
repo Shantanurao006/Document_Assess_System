@@ -14,6 +14,7 @@ import {
 
 import { uploadDocuments } from "../../api/uploadApi";
 import { validateApprover } from "../../api/approverApi";
+import { clearUserSession, getStoredUser } from "../../auth/session";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutlined";
@@ -21,7 +22,7 @@ import IconButton from "@mui/material/IconButton";
 
 function UserDashboard() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = getStoredUser();
 
 const [documents, setDocuments] = useState([
     {
@@ -33,7 +34,7 @@ const [documents, setDocuments] = useState([
 const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    clearUserSession();
     navigate("/");
   };
 

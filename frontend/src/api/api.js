@@ -1,4 +1,10 @@
 import axios from "axios";
+import {
+  clearUserSession,
+  getLoginPath,
+  getStoredUser,
+  isSessionExpired,
+} from "../auth/session";
 
 // =====================================
 // Backend Base URL
@@ -22,14 +28,16 @@ const API = axios.create({
 // =====================================
 API.interceptors.request.use(
   (config) => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
+    const user = getStoredUser();
 
-      if (user?.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
-      }
-    } catch (err) {
-      console.error("Unable to parse user", err);
+    if (user && isSessionExpired(user)) {
+      clearUserSession();
+      window.location.href = getLoginPath(window.location.pathname);
+      return Promise.reject(new Error("Session expired"));
+    }
+
+    if (user?.token) {
+      config.headers.Authorization = `Bearer ${user.token}`;
     }
 
     return config;
@@ -50,10 +58,10 @@ API.interceptors.response.use(
 
     switch (error.response.status) {
       case 401:
-        localStorage.removeItem("user");
+        clearUserSession();
 
         if (window.location.pathname !== "/") {
-          window.location.href = "/";
+          window.location.href = getLoginPath(window.location.pathname);
         }
         break;
 

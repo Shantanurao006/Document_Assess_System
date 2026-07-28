@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/api";
+import { saveUserSession } from "../../auth/session";
 import {
   Box,
   Button,
@@ -11,6 +12,8 @@ import {
 
 function Login() {
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(window.location.search);
+  const nextPath = searchParams.get("next");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -50,11 +53,13 @@ function Login() {
 
       const user = response.data.data;
 
-      localStorage.setItem("user", JSON.stringify(user));
+      saveUserSession(user);
 
       alert(`Welcome ${user.email}`);
 
-      if (user.role === "ADMIN") {
+      if (nextPath && nextPath.startsWith("/") && nextPath !== "/login") {
+        navigate(nextPath);
+      } else if (user.role === "ADMIN") {
         navigate("/admin/dashboard");
       } else {
         navigate("/user/dashboard");

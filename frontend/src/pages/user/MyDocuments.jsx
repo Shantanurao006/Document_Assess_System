@@ -25,6 +25,7 @@ import {
     getMyDocuments,
     downloadSignedPdf,
 } from "../../api/documentApi";
+import { clearUserSession, getStoredUser } from "../../auth/session";
 
 function MyDocuments() {
 
@@ -32,9 +33,7 @@ function MyDocuments() {
 
     const [documents, setDocuments] = useState([]);
 
-const user = JSON.parse(
-    localStorage.getItem("user") || "null"
-);
+const user = getStoredUser();
 
 useEffect(() => {
 
@@ -60,11 +59,11 @@ useEffect(() => {
         loadDocuments();
     }
 
-}, []);
+}, [user?.email]);
 
 
 const handleLogout = () => {
-    localStorage.removeItem("user");
+    clearUserSession();
     navigate("/");
 };
 
