@@ -13,7 +13,7 @@ import {
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
@@ -421,7 +421,7 @@ function UserDashboard() {
                 <Stack spacing={1.5}>
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <CheckCircleOutlineIcon color="success" />
+                      <CheckCircleOutlinedIcon color="success" />
                       <Typography variant="body2" fontWeight={600}>Status</Typography>
                     </Box>
                     <Typography variant="body2" color="success.main" fontWeight={600}>
