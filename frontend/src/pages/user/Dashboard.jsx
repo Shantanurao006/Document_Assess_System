@@ -371,30 +371,30 @@ function UserDashboard() {
                                 gap: 1,
                                 px: 1.4,
                                 py: 1,
-                                borderRadius: 2,
-                                bgcolor: "rgba(255,255,255,0.9)",
-                                border: "2px dashed #90caf9",
-                                boxShadow: 3,
-                                cursor: "grab",
+                                borderRadius: 6,
+                                bgcolor: "rgba(255,245,230,0.35)",
+                                border: "3px dashed #ffb74d",
+                                boxShadow: 1,
+                                cursor: "move",
                                 userSelect: "none",
                                 touchAction: "none",
+                                overflow: "hidden",
                               }}
                               onPointerDown={(event) => handleDragStart(event, "preview")}
                             >
-                              <DragIndicatorIcon color="primary" fontSize="small" />
-                              <CheckCircleOutlinedIcon color="success" fontSize="small" />
-                              <Typography variant="body2" fontWeight={600}>
+                              <Typography variant="body2" sx={{ color: "#ef6c00", fontWeight: 700 }}>
                                 Status
                               </Typography>
                               <Box
                                 sx={{
                                   position: "absolute",
-                                  right: 4,
-                                  bottom: 4,
-                                  width: 12,
-                                  height: 12,
-                                  borderRight: "3px solid #1976d2",
-                                  borderBottom: "3px solid #1976d2",
+                                  right: 6,
+                                  bottom: 6,
+                                  width: 14,
+                                  height: 14,
+                                  transform: "rotate(45deg)",
+                                  borderRight: "4px solid #ef6c00",
+                                  borderBottom: "4px solid #ef6c00",
                                   cursor: "nwse-resize",
                                 }}
                                 onPointerDown={handleResizeStart}
@@ -539,8 +539,8 @@ function UserDashboard() {
                 <Box
                   sx={{
                     position: "fixed",
-                    left: dragGhostPosition.x - 70,
-                    top: dragGhostPosition.y - 20,
+                    left: dragGhostPosition.x - (statusSize.width / 2),
+                    top: dragGhostPosition.y - (statusSize.height / 2),
                     width: statusSize.width,
                     minHeight: statusSize.height,
                     display: "flex",
@@ -549,17 +549,15 @@ function UserDashboard() {
                     gap: 1,
                     px: 1.4,
                     py: 1,
-                    borderRadius: 2,
-                    bgcolor: "rgba(255,255,255,0.95)",
-                    border: "2px dashed #90caf9",
-                    boxShadow: 3,
+                    borderRadius: 6,
+                    bgcolor: "rgba(255,245,230,0.35)",
+                    border: "3px dashed #ffb74d",
+                    boxShadow: 1,
                     zIndex: 10,
                     pointerEvents: "none",
                   }}
                 >
-                  <DragIndicatorIcon color="primary" fontSize="small" />
-                  <CheckCircleOutlinedIcon color="success" fontSize="small" />
-                  <Typography variant="body2" fontWeight={600}>
+                  <Typography variant="body2" sx={{ color: "#ef6c00", fontWeight: 700 }}>
                     Status
                   </Typography>
                 </Box>
