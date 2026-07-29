@@ -40,8 +40,10 @@ function UserDashboard() {
   const [dragGhostPosition, setDragGhostPosition] = useState({ x: 0, y: 0 });
   const [isStatusPlacedOnPreview, setIsStatusPlacedOnPreview] = useState(false);
   const [statusPlacement, setStatusPlacement] = useState({ x: 16, y: 16 });
+  const [statusSize, setStatusSize] = useState({ width: 170, height: 56 });
   const [dragSource, setDragSource] = useState("side");
   const previewContainerRef = useRef(null);
+  const resizeRef = useRef(null);
 
   useEffect(() => {
     if (!isDragging) return undefined;
@@ -166,6 +168,30 @@ function UserDashboard() {
     setDragSource(source);
     setIsDragging(true);
     setDragGhostPosition({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleResizeStart = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = statusSize.width;
+    const startHeight = statusSize.height;
+
+    const handleResizeMove = (moveEvent) => {
+      const nextWidth = Math.max(130, startWidth + (moveEvent.clientX - startX));
+      const nextHeight = Math.max(46, startHeight + (moveEvent.clientY - startY));
+      setStatusSize({ width: nextWidth, height: nextHeight });
+    };
+
+    const handleResizeEnd = () => {
+      window.removeEventListener("pointermove", handleResizeMove);
+      window.removeEventListener("pointerup", handleResizeEnd);
+    };
+
+    window.addEventListener("pointermove", handleResizeMove);
+    window.addEventListener("pointerup", handleResizeEnd);
   };
 
   const handleSubmit = async () => {
@@ -331,19 +357,23 @@ function UserDashboard() {
 
                           {isStatusPlacedOnPreview && (
                             <Box
+                              ref={resizeRef}
                               sx={{
                                 position: "absolute",
                                 left: statusPlacement.x,
                                 top: statusPlacement.y,
                                 zIndex: 2,
-                                display: "inline-flex",
+                                width: statusSize.width,
+                                minHeight: statusSize.height,
+                                display: "flex",
                                 alignItems: "center",
+                                justifyContent: "center",
                                 gap: 1,
                                 px: 1.4,
                                 py: 1,
                                 borderRadius: 2,
-                                bgcolor: "#fcfdff",
-                                border: "1px solid #dce6f3",
+                                bgcolor: "rgba(255,255,255,0.9)",
+                                border: "2px dashed #90caf9",
                                 boxShadow: 3,
                                 cursor: "grab",
                                 userSelect: "none",
@@ -356,6 +386,19 @@ function UserDashboard() {
                               <Typography variant="body2" fontWeight={600}>
                                 Status
                               </Typography>
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  right: 4,
+                                  bottom: 4,
+                                  width: 12,
+                                  height: 12,
+                                  borderRight: "3px solid #1976d2",
+                                  borderBottom: "3px solid #1976d2",
+                                  cursor: "nwse-resize",
+                                }}
+                                onPointerDown={handleResizeStart}
+                              />
                             </Box>
                           )}
                         </>
@@ -498,14 +541,17 @@ function UserDashboard() {
                     position: "fixed",
                     left: dragGhostPosition.x - 70,
                     top: dragGhostPosition.y - 20,
-                    display: "inline-flex",
+                    width: statusSize.width,
+                    minHeight: statusSize.height,
+                    display: "flex",
                     alignItems: "center",
+                    justifyContent: "center",
                     gap: 1,
                     px: 1.4,
                     py: 1,
                     borderRadius: 2,
-                    bgcolor: "#fcfdff",
-                    border: "1px solid #dce6f3",
+                    bgcolor: "rgba(255,255,255,0.95)",
+                    border: "2px dashed #90caf9",
                     boxShadow: 3,
                     zIndex: 10,
                     pointerEvents: "none",
