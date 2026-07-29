@@ -33,6 +33,7 @@ function UserDashboard() {
       file: null,
       previewUrl: "",
       approvers: [{ email: "" }],
+      annotations: [],
     },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,34 +52,87 @@ function UserDashboard() {
     if (!isDragging) return undefined;
 
     const handlePointerMove = (event) => {
+      // when dragging an already-placed status, move it live
+      if (dragSource === "preview") {
+        const previewEl = previewRefs.current[draggingDocIndex] || previewContainerRef.current;
+        const rect = previewEl?.getBoundingClientRect();
+        if (rect) {
+          const nextX = Math.min(
+            Math.max(event.clientX - rect.left - statusSize.width / 2, 12),
+            Math.max(rect.width - statusSize.width - 12, 12)
+          );
+          const nextY = Math.min(
+            Math.max(event.clientY - rect.top - statusSize.height / 2, 12),
+            Math.max(rect.height - statusSize.height - 12, 12)
+          );
+
+          setStatusPlacement({ x: nextX, y: nextY });
+          // update document annotation live
+          setDocuments((prev) => {
+            const copy = [...prev];
+            copy[draggingDocIndex] = { ...copy[draggingDocIndex] };
+            copy[draggingDocIndex].annotations = copy[draggingDocIndex].annotations || [];
+            copy[draggingDocIndex].annotations[0] = {
+              type: "status",
+              x: nextX,
+              y: nextY,
+              width: statusSize.width,
+              height: statusSize.height,
+              text: copy[draggingDocIndex].annotations[0]?.text || "",
+            };
+            return copy;
+          });
+        }
+        return;
+      }
+
       setDragGhostPosition({ x: event.clientX, y: event.clientY });
     };
 
     const handlePointerUp = (event) => {
-      const previewEl = previewRefs.current[draggingDocIndex] || previewContainerRef.current;
-      const previewRect = previewEl?.getBoundingClientRect();
-      const insidePreview =
-        previewRect &&
-        event.clientX >= previewRect.left &&
-        event.clientX <= previewRect.right &&
-        event.clientY >= previewRect.top &&
-        event.clientY <= previewRect.bottom;
+      // find which preview (if any) the pointer is over
+      let targetIndex = -1;
+      for (let i = 0; i < previewRefs.current.length; i++) {
+        const el = previewRefs.current[i];
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) {
+          targetIndex = i;
+          break;
+        }
+      }
 
-      if (insidePreview) {
+      if (targetIndex !== -1) {
+        const previewRect = previewRefs.current[targetIndex].getBoundingClientRect();
         const nextX = Math.min(
-          Math.max(event.clientX - previewRect.left - 60, 12),
-          Math.max(previewRect.width - 160, 12)
+          Math.max(event.clientX - previewRect.left - statusSize.width / 2, 12),
+          Math.max(previewRect.width - statusSize.width - 12, 12)
         );
         const nextY = Math.min(
-          Math.max(event.clientY - previewRect.top - 24, 12),
-          Math.max(previewRect.height - 48, 12)
+          Math.max(event.clientY - previewRect.top - statusSize.height / 2, 12),
+          Math.max(previewRect.height - statusSize.height - 12, 12)
         );
 
         setStatusPlacement({ x: nextX, y: nextY });
         setIsStatusPlacedOnPreview(true);
-        // keep a reference to the preview used
-        previewContainerRef.current = previewEl;
+        setDraggingDocIndex(targetIndex);
+
+        setDocuments((prev) => {
+          const copy = [...prev];
+          copy[targetIndex] = { ...copy[targetIndex] };
+          copy[targetIndex].annotations = copy[targetIndex].annotations || [];
+          copy[targetIndex].annotations[0] = {
+            type: "status",
+            x: nextX,
+            y: nextY,
+            width: statusSize.width,
+            height: statusSize.height,
+            text: copy[targetIndex].annotations[0]?.text || "",
+          };
+          return copy;
+        });
       } else if (dragSource === "preview") {
+        // keep it placed where it was
         setIsStatusPlacedOnPreview(true);
       } else {
         setIsStatusPlacedOnPreview(false);
@@ -192,6 +246,21 @@ function UserDashboard() {
       const nextWidth = Math.max(130, startWidth + (moveEvent.clientX - startX));
       const nextHeight = Math.max(46, startHeight + (moveEvent.clientY - startY));
       setStatusSize({ width: nextWidth, height: nextHeight });
+      // update annotation size live
+      setDocuments((prev) => {
+        const copy = [...prev];
+        copy[draggingDocIndex] = { ...copy[draggingDocIndex] };
+        copy[draggingDocIndex].annotations = copy[draggingDocIndex].annotations || [];
+        copy[draggingDocIndex].annotations[0] = {
+          type: "status",
+          x: copy[draggingDocIndex].annotations[0]?.x ?? statusPlacement.x,
+          y: copy[draggingDocIndex].annotations[0]?.y ?? statusPlacement.y,
+          width: nextWidth,
+          height: nextHeight,
+          text: copy[draggingDocIndex].annotations[0]?.text || "",
+        };
+        return copy;
+      });
     };
 
     const handleResizeEnd = () => {
@@ -391,9 +460,31 @@ function UserDashboard() {
                               }}
                               onPointerDown={(event) => handleDragStart(event, "preview", documentIndex)}
                             >
-                              <Typography variant="body2" sx={{ color: "#ef6c00", fontWeight: 700 }}>
-                                Status
-                              </Typography>
+                              <TextField
+                                variant="standard"
+                                value={documents[documentIndex].annotations?.[0]?.text || ""
+                                }
+                                onChange={(e) => {
+                                  const nextText = e.target.value;
+                                  setDocuments((prev) => {
+                                    const copy = [...prev];
+                                    copy[documentIndex] = { ...copy[documentIndex] };
+                                    copy[documentIndex].annotations = copy[documentIndex].annotations || [];
+                                    copy[documentIndex].annotations[0] = {
+                                      type: "status",
+                                      x: statusPlacement.x,
+                                      y: statusPlacement.y,
+                                      width: statusSize.width,
+                                      height: statusSize.height,
+                                      text: nextText,
+                                    };
+                                    return copy;
+                                  });
+                                }}
+                                inputProps={{ style: { color: "#ef6c00", fontWeight: 700, textAlign: "center" } }}
+                                sx={{ width: "100%" }}
+                                size="small"
+                              />
                               <Box
                                 sx={{
                                   position: "absolute",
