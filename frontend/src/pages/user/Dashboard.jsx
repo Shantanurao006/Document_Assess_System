@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -9,120 +9,28 @@ import {
   Button,
   Stack,
   TextField,
-  IconButton,
 } from "@mui/material";
 
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutlined";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 import { uploadDocuments } from "../../api/uploadApi";
 import { validateApprover } from "../../api/approverApi";
 import { clearUserSession, getStoredUser } from "../../auth/session";
 
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutlined";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
-
 function UserDashboard() {
   const navigate = useNavigate();
   const user = getStoredUser();
 
-const [documents, setDocuments] = useState([
+  const [documents, setDocuments] = useState([
     {
-        file: null,
-        previewUrl: "",
-        approvers: [
-            {
-                email: "",
-                status: "Pending",
-                date: "",
-                approvedBy: "",
-                signature: "",
-                x: 20,
-                y: 20,
-                detailOrder: ["status", "date", "approvedBy", "signature"],
-            },
-        ],
+      file: null,
+      previewUrl: "",
+      approvers: [{ email: "" }],
     },
-]);
-
-const [isSubmitting, setIsSubmitting] = useState(false);
-const [dragging, setDragging] = useState(null);
-const [previewPageCounts, setPreviewPageCounts] = useState({});
-const previewRefs = useRef([]);
-
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
-const handleDocumentLoadSuccess = (documentIndex, { numPages }) => {
-  setPreviewPageCounts((prev) => ({
-    ...prev,
-    [documentIndex]: numPages,
-  }));
-};
-
-const updateApproverPosition = (documentIndex, approverIndex, x, y) => {
-  setDocuments((prev) => {
-    const next = [...prev];
-    if (!next[documentIndex] || !next[documentIndex].approvers[approverIndex]) {
-      return prev;
-    }
-    next[documentIndex] = { ...next[documentIndex] };
-    next[documentIndex].approvers = [...next[documentIndex].approvers];
-    next[documentIndex].approvers[approverIndex] = {
-      ...next[documentIndex].approvers[approverIndex],
-      x,
-      y,
-    };
-    return next;
-  });
-};
-
-const handleDragStart = (documentIndex, approverIndex, event) => {
-  event.preventDefault();
-  const targetRect = event.currentTarget.getBoundingClientRect();
-  setDragging({
-    documentIndex,
-    approverIndex,
-    offsetX: event.clientX - targetRect.left,
-    offsetY: event.clientY - targetRect.top,
-  });
-};
-
-const stopDrag = () => {
-  setDragging(null);
-};
-
-useEffect(() => {
-  const handlePointerMove = (event) => {
-    if (!dragging) return;
-    const previewEl = previewRefs.current[dragging.documentIndex];
-    if (!previewEl) return;
-
-    const previewRect = previewEl.getBoundingClientRect();
-    const x = clamp(event.clientX - previewRect.left - dragging.offsetX, 0, previewRect.width - 220);
-    const y = clamp(event.clientY - previewRect.top - dragging.offsetY, 0, previewRect.height - 140);
-    updateApproverPosition(dragging.documentIndex, dragging.approverIndex, x, y);
-  };
-
-  if (dragging) {
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", stopDrag);
-  }
-
-  return () => {
-    window.removeEventListener("pointermove", handlePointerMove);
-    window.removeEventListener("pointerup", stopDrag);
-  };
-}, [dragging]);
+  ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogout = () => {
     clearUserSession();
@@ -143,26 +51,13 @@ useEffect(() => {
     setDocuments(updatedDocuments);
   };
 
-
-
   const handleAddFile = () => {
     setDocuments([
       ...documents,
       {
         file: null,
         previewUrl: "",
-        approvers: [
-          {
-            email: "",
-            status: "Pending",
-            date: "",
-            approvedBy: "",
-            signature: "",
-            x: 20,
-            y: 20,
-            detailOrder: ["status", "date", "approvedBy", "signature"],
-          },
-        ],
+        approvers: [{ email: "" }],
       },
     ]);
   };
@@ -175,169 +70,86 @@ useEffect(() => {
     }
 
     if (updatedDocuments.length === 0) {
-      updatedDocuments.push({
-        file: null,
-        previewUrl: "",
-        approvers: [
-          {
-            email: "",
-            status: "Pending",
-            date: "",
-            approvedBy: "",
-            signature: "",
-            x: 20,
-            y: 20,
-            detailOrder: ["status", "date", "approvedBy", "signature"],
-          },
-        ],
-      });
+      updatedDocuments.push({ file: null, previewUrl: "", approvers: [{ email: "" }] });
     }
 
     setDocuments(updatedDocuments);
   };
 
+  const handleApproverEmailChange = (documentIndex, approverIndex, value) => {
+    const updatedDocuments = [...documents];
+    updatedDocuments[documentIndex].approvers[approverIndex].email = value;
+    setDocuments(updatedDocuments);
+  };
 
-  const handleApproverEmailChange = (
-  documentIndex,
-  approverIndex,
-  value
-) => {
-  const updatedDocuments = [...documents];
-  updatedDocuments[documentIndex].approvers[approverIndex].email = value;
-  setDocuments(updatedDocuments);
-};
+  const addApproverEmail = (documentIndex) => {
+    const updatedDocuments = [...documents];
+    updatedDocuments[documentIndex].approvers.push({ email: "" });
+    setDocuments(updatedDocuments);
+  };
 
-const addApproverEmail = (documentIndex) => {
-  const updatedDocuments = [...documents];
+  const removeApproverEmail = (documentIndex, approverIndex) => {
+    const updatedDocuments = [...documents];
+    updatedDocuments[documentIndex].approvers.splice(approverIndex, 1);
 
-  updatedDocuments[documentIndex].approvers.push({
-    email: "",
-    status: "Pending",
-    date: "",
-    approvedBy: "",
-    signature: "",
-    x: 20,
-    y: 20,
-    detailOrder: ["status", "date", "approvedBy", "signature"],
-  });
+    if (updatedDocuments[documentIndex].approvers.length === 0) {
+      updatedDocuments[documentIndex].approvers.push({ email: "" });
+    }
 
-  setDocuments(updatedDocuments);
-};
+    setDocuments(updatedDocuments);
+  };
 
-const removeApproverEmail = (documentIndex, approverIndex) => {
-  const updatedDocuments = [...documents];
+  const canSubmit =
+    documents.some((doc) => doc.file) &&
+    documents.some((doc) => doc.approvers.some((app) => app.email.trim()));
 
-  updatedDocuments[documentIndex].approvers.splice(approverIndex, 1);
-
-  if (updatedDocuments[documentIndex].approvers.length === 0) {
-    updatedDocuments[documentIndex].approvers.push({
-      email: "",
-      status: "Pending",
-      date: "",
-      approvedBy: "",
-      signature: "",
-      detailOrder: ["status", "date", "approvedBy", "signature"],
-    });
-  }
-
-  setDocuments(updatedDocuments);
-};
-
-const moveApprover = (documentIndex, fromIndex, toIndex) => {
-  if (toIndex < 0 || toIndex >= documents[documentIndex].approvers.length) {
-    return;
-  }
-
-  const updatedDocuments = [...documents];
-  const approvers = [...updatedDocuments[documentIndex].approvers];
-  const [moved] = approvers.splice(fromIndex, 1);
-  approvers.splice(toIndex, 0, moved);
-  updatedDocuments[documentIndex].approvers = approvers;
-  setDocuments(updatedDocuments);
-};
-
-const moveDetail = (documentIndex, approverIndex, detailIndex, direction) => {
-  const updatedDocuments = [...documents];
-  const approver = updatedDocuments[documentIndex].approvers[approverIndex];
-  const newOrder = [...approver.detailOrder];
-  const targetIndex = detailIndex + direction;
-
-  if (targetIndex < 0 || targetIndex >= newOrder.length) return;
-
-  const [moved] = newOrder.splice(detailIndex, 1);
-  newOrder.splice(targetIndex, 0, moved);
-  approver.detailOrder = newOrder;
-  setDocuments(updatedDocuments);
-};
-
-const handleSubmit = async () => {
+  const handleSubmit = async () => {
     if (!user || !user.email) {
-        alert("Please login again.");
-        navigate("/login");
-        return;
+      alert("Please login again.");
+      navigate("/login");
+      return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     try {
-        setIsSubmitting(true);
+      setIsSubmitting(true);
 
-        for (let i = 0; i < documents.length; i++) {
-            const document = documents[i];
+      for (let i = 0; i < documents.length; i++) {
+        const document = documents[i];
 
-            if (!document.file) {
-                alert(`Please select a file for Document ${i + 1}.`);
-                return;
-            }
-
-            for (const approver of document.approvers) {
-                const email = approver.email.trim();
-
-                if (!email) {
-                    alert(`Please enter approver email for Document ${i + 1}.`);
-                    return;
-                }
-
-                if (!emailRegex.test(email)) {
-                    alert(`Please enter a valid email: ${email}`);
-                    return;
-                }
-
-                await validateApprover(email);
-            }
+        if (!document.file) {
+          alert(`Please select a file for Document ${i + 1}.`);
+          return;
         }
 
-        const response = await uploadDocuments(
-            documents,
-            user.email
-        );
+        const emails = document.approvers.map((approver) => approver.email.trim()).filter(Boolean);
 
-        alert(response.message);
+        if (emails.length === 0) {
+          alert(`Please enter at least one approver email for Document ${i + 1}.`);
+          return;
+        }
 
-        setDocuments([
-            {
-                file: null,
-                approvers: [
-                    {
-                        email: "",
-                        status: "Pending",
-                        date: "",
-                        approvedBy: "",
-                        signature: "",
-                    },
-                ],
-            },
-        ]);
+        for (const email of emails) {
+          if (!emailRegex.test(email)) {
+            alert(`Please enter a valid email: ${email}`);
+            return;
+          }
 
+          await validateApprover(email);
+        }
+      }
+
+      const response = await uploadDocuments(documents, user.email);
+      alert(response.message);
+
+      setDocuments([{ file: null, previewUrl: "", approvers: [{ email: "" }] }]);
     } catch (error) {
-        alert(
-            error.response?.data?.message ||
-            "Validation failed."
-        );
+      alert(error.response?.data?.message || "Validation failed.");
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
-};
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f5" }}>
@@ -347,32 +159,32 @@ const handleSubmit = async () => {
             Document Approval System
           </Typography>
           <Typography sx={{ mr: 3 }}>{user?.email}</Typography>
-            {user?.role === "ADMIN" && (
-              <Button
-                variant="outlined"
-                color="inherit"
-                sx={{ mr: 2, color: "#fff", borderColor: "#fff" }}
-                onClick={() => navigate("/register")}
-              >
-                Register
-              </Button>
-            )}
-            <Button
-              variant="contained"
-              color="secondary"
-              sx={{ mr: 2 }}
-              onClick={() => navigate("/user/my-documents")}
-            >
-              My Documents
-            </Button>
+          {user?.role === "ADMIN" && (
             <Button
               variant="outlined"
               color="inherit"
-              sx={{ color: "#fff", borderColor: "#fff" }}
-              onClick={handleLogout}
+              sx={{ mr: 2, color: "#fff", borderColor: "#fff" }}
+              onClick={() => navigate("/register")}
             >
-              Logout
+              Register
             </Button>
+          )}
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{ mr: 2 }}
+            onClick={() => navigate("/user/my-documents")}
+          >
+            My Documents
+          </Button>
+          <Button
+            variant="outlined"
+            color="inherit"
+            sx={{ color: "#fff", borderColor: "#fff" }}
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
         </Toolbar>
       </AppBar>
 
@@ -391,11 +203,7 @@ const handleSubmit = async () => {
 
           <Stack spacing={3}>
             {documents.map((document, documentIndex) => (
-              <Paper
-                key={documentIndex}
-                elevation={3}
-                sx={{ p: 3, borderRadius: 3 }}
-              >
+              <Paper key={documentIndex} elevation={3} sx={{ p: 3, borderRadius: 3 }}>
                 <Box
                   sx={{
                     display: "flex",
@@ -412,7 +220,7 @@ const handleSubmit = async () => {
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {document.file
-                        ? `${(document.file.size / 1024).toFixed(2)} KB â€¢ ${document.file.type || "Unknown"}`
+                        ? `${(document.file.size / 1024).toFixed(2)} KB • ${document.file.type || "Unknown"}`
                         : "Choose a file to attach to this document."}
                     </Typography>
                   </Box>
@@ -430,219 +238,96 @@ const handleSubmit = async () => {
                       />
                     </Button>
                     {documents.length > 1 && (
-                      <Button
-                        color="error"
-                        variant="contained"
-                        onClick={() => handleRemoveFile(documentIndex)}
-                      >
+                      <Button color="error" variant="contained" onClick={() => handleRemoveFile(documentIndex)}>
                         Remove
                       </Button>
                     )}
                   </Box>
                 </Box>
 
-                <Box
-                  sx={{
-                    position: "relative",
-                    minHeight: 360,
-                    border: "1px solid #c5d2e8",
-                    borderRadius: 3,
-                    bgcolor: "#eef4ff",
-                    p: 2,
-                    overflow: "hidden",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: "relative",
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: 3,
-                      bgcolor: "#fff",
-                      overflow: "hidden",
-                    }}
-                    ref={(el) => {
-                      previewRefs.current[documentIndex] = el;
-                    }}
-                  >
+                <Box sx={{ mb: 3 }}>
+                  {document.previewUrl ? (
+                    document.file?.type.startsWith("image/") ? (
+                      <img
+                        src={document.previewUrl}
+                        alt={document.file?.name || "Document preview"}
+                        style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12 }}
+                      />
+                    ) : (
+                      <iframe
+                        title={document.file?.name || "Document preview"}
+                        src={document.previewUrl}
+                        style={{ width: "100%", height: 360, border: "none", borderRadius: 12 }}
+                      />
+                    )
+                  ) : (
                     <Box
                       sx={{
-                        position: "absolute",
-                        inset: 0,
                         display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        flexDirection: "column",
-                        gap: 2,
-                        p: 3,
-                        zIndex: 1,
+                        gap: 1,
+                        minHeight: 220,
+                        color: "text.secondary",
+                        border: "1px dashed #c5d2e8",
+                        borderRadius: 3,
+                        p: 4,
                       }}
                     >
-                      {document.previewUrl ? (
-                        document.file?.type.startsWith("image/") ? (
-                          <img
-                            src={document.previewUrl}
-                            alt={document.file?.name || "Document preview"}
-                            style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 12 }}
-                          />
-                        ) : (
-                          <iframe
-                            title={document.file?.name || "Document preview"}
-                            src={document.previewUrl}
-                            style={{ width: "100%", height: "100%", border: "none" }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 1,
-                                width: "100%",
-                                height: "100%",
-                                color: "text.secondary",
-                                p: 2,
-                              }}
-                            >
-                              <UploadFileIcon sx={{ fontSize: 64, color: "primary.main" }} />
-                              <Typography variant="h6" fontWeight="bold" textAlign="center">
-                                {document.file?.name || "Document preview"}
-                              </Typography>
-                              <Typography variant="body2" textAlign="center">
-                                Preview not available in this browser. Open the file manually below.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                size="small"
-                                href={document.previewUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                Open file in new tab
-                              </Button>
-                            </Box>
-                          </iframe>
-                        )
-                      ) : (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 1,
-                            width: "100%",
-                            height: "100%",
-                            color: "text.secondary",
-                          }}
+                      <UploadFileIcon sx={{ fontSize: 48, color: "primary.main" }} />
+                      <Typography variant="body1" fontWeight="bold">
+                        Document preview will appear here.
+                      </Typography>
+                      <Typography variant="body2" textAlign="center">
+                        Upload a PDF or image to preview the document.
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                  Approver Emails
+                </Typography>
+
+                <Stack spacing={2}>
+                  {document.approvers.map((approver, approverIndex) => (
+                    <Box
+                      key={approverIndex}
+                      sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "flex-start" }}
+                    >
+                      <TextField
+                        id={`approver-email-${documentIndex}-${approverIndex}`}
+                        name={`approverEmail_${documentIndex}_${approverIndex}`}
+                        label={`Email ${approverIndex + 1}`}
+                        type="email"
+                        autoComplete="email"
+                        fullWidth
+                        required
+                        placeholder="Enter approver email"
+                        value={approver.email}
+                        onChange={(event) =>
+                          handleApproverEmailChange(documentIndex, approverIndex, event.target.value)
+                        }
+                        size="small"
+                      />
+                      {document.approvers.length > 1 && (
+                        <Button
+                          variant="text"
+                          color="error"
+                          startIcon={<RemoveCircleOutlineIcon />}
+                          onClick={() => removeApproverEmail(documentIndex, approverIndex)}
                         >
-                          <UploadFileIcon sx={{ fontSize: 64, color: "primary.main" }} />
-                          <Typography variant="h6" fontWeight="bold" textAlign="center">
-                            {document.file ? document.file.name : "Document preview"}
-                          </Typography>
-                          <Typography variant="body2" textAlign="center">
-                            {document.file
-                              ? `Choose another supported file type if preview fails.`
-                              : "Choose a file to display it here."}
-                          </Typography>
-                        </Box>
+                          Remove
+                        </Button>
                       )}
                     </Box>
+                  ))}
+                </Stack>
 
-                    {document.approvers.map((approver, approverIndex) => (
-                      <Paper
-                        key={approverIndex}
-                        elevation={6}
-                        onPointerDown={(event) => handleDragStart(documentIndex, approverIndex, event)}
-                        sx={{
-                          position: "absolute",
-                          left: `${approver.x}px`,
-                          top: `${approver.y}px`,
-                          width: 220,
-                          p: 2,
-                          borderRadius: 2,
-                          border: "1px solid rgba(0,0,0,0.12)",
-                          bgcolor: "rgba(255,255,255,0.95)",
-                          cursor: "grab",
-                          userSelect: "none",
-                          zIndex: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: 1,
-                            mb: 1,
-                          }}
-                        >
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            Signer {approverIndex + 1}
-                          </Typography>
-                          <Box sx={{ display: "flex", gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => moveApprover(documentIndex, approverIndex, approverIndex - 1)}
-                              disabled={approverIndex === 0}
-                            >
-                              <ArrowUpwardIcon />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => moveApprover(documentIndex, approverIndex, approverIndex + 1)}
-                              disabled={approverIndex === document.approvers.length - 1}
-                            >
-                              <ArrowDownwardIcon />
-                            </IconButton>
-                          </Box>
-                        </Box>
-
-                        <TextField
-                          id={`approver-email-${documentIndex}-${approverIndex}`}
-                          name={`approverEmail_${documentIndex}_${approverIndex}`}
-                          label="Signer Email"
-                          type="email"
-                          autoComplete="email"
-                          fullWidth
-                          required
-                          placeholder="Enter Admin Email"
-                          value={approver.email}
-                          onChange={(event) =>
-                            handleApproverEmailChange(documentIndex, approverIndex, event.target.value)
-                          }
-                          size="small"
-                        />
-
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
-                          <Box sx={{ flex: 1, minWidth: 100 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Status
-                            </Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                              {approver.status}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ flex: 1, minWidth: 100 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Date
-                            </Typography>
-                            <Typography variant="body2" fontWeight="bold">
-                              {approver.date || "-"}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Paper>
-                    ))}
-                  </Box>
-
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-                  <Button
-                    startIcon={<AddCircleOutlineIcon />}
-                    onClick={() => addApproverEmail(documentIndex)}
-                  >
-                    Add signer
+                <Box sx={{ mt: 2 }}>
+                  <Button startIcon={<AddCircleOutlineIcon />} onClick={() => addApproverEmail(documentIndex)}>
+                    Add approver email
                   </Button>
                 </Box>
               </Paper>
@@ -653,14 +338,9 @@ const handleSubmit = async () => {
                 + Add More Files
               </Button>
             </Box>
+
             <Box>
-              <Button
-                variant="contained"
-                color="success"
-                size="large"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
+              <Button variant="contained" color="success" size="large" onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
                 {isSubmitting ? "Uploading..." : "Submit"}
               </Button>
             </Box>
