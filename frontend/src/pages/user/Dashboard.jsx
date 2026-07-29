@@ -38,8 +38,8 @@ function UserDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragGhostPosition, setDragGhostPosition] = useState({ x: 0, y: 0 });
-  const [isPlacedOnPreview, setIsPlacedOnPreview] = useState(false);
-  const [previewPlacement, setPreviewPlacement] = useState({ x: 16, y: 16 });
+  const [isStatusPlacedOnPreview, setIsStatusPlacedOnPreview] = useState(false);
+  const [statusPlacement, setStatusPlacement] = useState({ x: 16, y: 16 });
   const [dragSource, setDragSource] = useState("side");
   const previewContainerRef = useRef(null);
 
@@ -61,20 +61,20 @@ function UserDashboard() {
 
       if (insidePreview) {
         const nextX = Math.min(
-          Math.max(event.clientX - previewRect.left - 120, 12),
-          Math.max(previewRect.width - 240, 12)
+          Math.max(event.clientX - previewRect.left - 60, 12),
+          Math.max(previewRect.width - 160, 12)
         );
         const nextY = Math.min(
-          Math.max(event.clientY - previewRect.top - 70, 12),
-          Math.max(previewRect.height - 180, 12)
+          Math.max(event.clientY - previewRect.top - 24, 12),
+          Math.max(previewRect.height - 48, 12)
         );
 
-        setPreviewPlacement({ x: nextX, y: nextY });
-        setIsPlacedOnPreview(true);
+        setStatusPlacement({ x: nextX, y: nextY });
+        setIsStatusPlacedOnPreview(true);
       } else if (dragSource === "preview") {
-        setIsPlacedOnPreview(true);
+        setIsStatusPlacedOnPreview(true);
       } else {
-        setIsPlacedOnPreview(false);
+        setIsStatusPlacedOnPreview(false);
       }
 
       setIsDragging(false);
@@ -329,60 +329,34 @@ function UserDashboard() {
                             />
                           )}
 
-                          {isPlacedOnPreview && (
-                            <Paper
-                              elevation={4}
+                          {isStatusPlacedOnPreview && (
+                            <Box
                               sx={{
                                 position: "absolute",
-                                left: previewPlacement.x,
-                                top: previewPlacement.y,
-                                width: 240,
-                                p: 2,
-                                borderRadius: 3,
+                                left: statusPlacement.x,
+                                top: statusPlacement.y,
+                                zIndex: 2,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 1,
+                                px: 1.4,
+                                py: 1,
+                                borderRadius: 2,
                                 bgcolor: "#fcfdff",
                                 border: "1px solid #dce6f3",
-                                zIndex: 2,
+                                boxShadow: 3,
                                 cursor: "grab",
                                 userSelect: "none",
                                 touchAction: "none",
                               }}
                               onPointerDown={(event) => handleDragStart(event, "preview")}
                             >
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 1,
-                                  mb: 1.5,
-                                }}
-                              >
-                                <DragIndicatorIcon color="primary" />
-                                <Typography variant="subtitle2" fontWeight="bold">
-                                  Approval Summary
-                                </Typography>
-                              </Box>
-
-                              <Stack spacing={1}>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                                  <CheckCircleOutlinedIcon color="success" />
-                                  <Typography variant="body2" fontWeight={600}>Status</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                                  <CalendarTodayOutlinedIcon color="primary" />
-                                  <Typography variant="body2" fontWeight={600}>Approved On</Typography>
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                                  <PersonOutlineOutlinedIcon color="primary" />
-                                  <Typography variant="body2" fontWeight={600}>Approved By</Typography>
-                                </Box>
-                                <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.7 }}>
-                                    <ImageOutlinedIcon color="secondary" />
-                                    <Typography variant="body2" fontWeight={600}>Signature image</Typography>
-                                  </Box>
-                                </Box>
-                              </Stack>
-                            </Paper>
+                              <DragIndicatorIcon color="primary" fontSize="small" />
+                              <CheckCircleOutlinedIcon color="success" fontSize="small" />
+                              <Typography variant="body2" fontWeight={600}>
+                                Status
+                              </Typography>
+                            </Box>
                           )}
                         </>
                       ) : (
@@ -473,29 +447,30 @@ function UserDashboard() {
             </Box>
 
             <Box sx={{ width: { xs: "100%", lg: 320 }, minHeight: 320, position: "relative" }}>
-              {!isPlacedOnPreview && (
-                <Paper
-                  elevation={4}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: 3,
-                    bgcolor: "#fcfdff",
-                    border: "1px solid #dce6f3",
-                    cursor: "grab",
-                    userSelect: "none",
-                    touchAction: "none",
-                  }}
-                  onPointerDown={(event) => handleDragStart(event, "side")}
-                >
+              {!isStatusPlacedOnPreview && (
+                <Paper elevation={4} sx={{ p: 2.5, borderRadius: 3, bgcolor: "#fcfdff", border: "1px solid #dce6f3" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-                    <DragIndicatorIcon color="primary" />
                     <Typography variant="subtitle1" fontWeight="bold">
                       Approval Summary
                     </Typography>
                   </Box>
 
                   <Stack spacing={1.5}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        p: 1.2,
+                        borderRadius: 2,
+                        bgcolor: "#f5f7fb",
+                        cursor: "grab",
+                        userSelect: "none",
+                        touchAction: "none",
+                      }}
+                      onPointerDown={(event) => handleDragStart(event, "side")}
+                    >
+                      <DragIndicatorIcon color="primary" />
                       <CheckCircleOutlinedIcon color="success" />
                       <Typography variant="body2" fontWeight={600}>Status</Typography>
                     </Box>
@@ -518,38 +493,30 @@ function UserDashboard() {
               )}
 
               {isDragging && (
-                <Paper
-                  elevation={8}
+                <Box
                   sx={{
                     position: "fixed",
-                    left: dragGhostPosition.x - 120,
-                    top: dragGhostPosition.y - 70,
-                    width: 240,
-                    p: 2,
-                    borderRadius: 3,
+                    left: dragGhostPosition.x - 70,
+                    top: dragGhostPosition.y - 20,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 1,
+                    px: 1.4,
+                    py: 1,
+                    borderRadius: 2,
                     bgcolor: "#fcfdff",
                     border: "1px solid #dce6f3",
+                    boxShadow: 3,
                     zIndex: 10,
                     pointerEvents: "none",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-                    <DragIndicatorIcon color="primary" />
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      Approval Summary
-                    </Typography>
-                  </Box>
-                  <Stack spacing={1}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                      <CheckCircleOutlinedIcon color="success" />
-                      <Typography variant="body2" fontWeight={600}>Status</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                      <CalendarTodayOutlinedIcon color="primary" />
-                      <Typography variant="body2" fontWeight={600}>Approved On</Typography>
-                    </Box>
-                  </Stack>
-                </Paper>
+                  <DragIndicatorIcon color="primary" fontSize="small" />
+                  <CheckCircleOutlinedIcon color="success" fontSize="small" />
+                  <Typography variant="body2" fontWeight={600}>
+                    Status
+                  </Typography>
+                </Box>
               )}
             </Box>
           </Box>
