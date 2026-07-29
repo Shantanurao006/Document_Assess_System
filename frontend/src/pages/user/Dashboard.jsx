@@ -424,9 +424,6 @@ function UserDashboard() {
                       <CheckCircleOutlinedIcon color="success" />
                       <Typography variant="body2" fontWeight={600}>Status</Typography>
                     </Box>
-                    <Typography variant="body2" color="success.main" fontWeight={600}>
-                      Approved
-                    </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
@@ -434,7 +431,6 @@ function UserDashboard() {
                       <CalendarTodayOutlinedIcon color="primary" />
                       <Typography variant="body2" fontWeight={600}>Approved On</Typography>
                     </Box>
-                    <Typography variant="body2">Jul 29, 2026</Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
@@ -442,28 +438,12 @@ function UserDashboard() {
                       <PersonOutlineOutlinedIcon color="primary" />
                       <Typography variant="body2" fontWeight={600}>Approved By</Typography>
                     </Box>
-                    <Typography variant="body2">Manager</Typography>
                   </Box>
 
                   <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                       <ImageOutlinedIcon color="secondary" />
                       <Typography variant="body2" fontWeight={600}>Signature image</Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        minHeight: 90,
-                        border: "1px dashed #c7d2e0",
-                        borderRadius: 2,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: "#ffffff",
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        Signature preview appears here
-                      </Typography>
                     </Box>
                   </Box>
                 </Stack>
