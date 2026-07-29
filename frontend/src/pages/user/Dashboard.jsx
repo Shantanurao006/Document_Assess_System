@@ -47,6 +47,7 @@ function UserDashboard() {
   const previewRefs = useRef([]);
   const [draggingDocIndex, setDraggingDocIndex] = useState(0);
   const resizeRef = useRef(null);
+  const hasPreview = documents.some((d) => !!d.previewUrl);
 
   useEffect(() => {
     if (!isDragging) return undefined;
@@ -224,6 +225,8 @@ function UserDashboard() {
   const handleDragStart = (event, source = "side", documentIndex = 0) => {
     event.preventDefault();
     event.stopPropagation();
+    // only allow starting a drag from the side when a preview exists
+    if (source === "side" && !documents.some((d) => !!d.previewUrl)) return;
     try {
       // capture the pointer so pointermove/up continue even when over an iframe
       if (event.pointerId && event.currentTarget && event.currentTarget.setPointerCapture) {
@@ -480,8 +483,8 @@ function UserDashboard() {
                                 variant="standard"
                                 value={documents[documentIndex].annotations?.[0]?.text || ""
                                 }
-                                onChange={(e) => {
-                                  const nextText = e.target.value;
+                                onChange={(event) => {
+                                  const nextText = event.target.value;
                                   setDocuments((prev) => {
                                     const copy = [...prev];
                                     copy[documentIndex] = { ...copy[documentIndex] };
@@ -606,7 +609,7 @@ function UserDashboard() {
             </Box>
 
             <Box sx={{ width: { xs: "100%", lg: 320 }, minHeight: 320, position: "relative" }}>
-              {!isStatusPlacedOnPreview && (
+              
                 <Paper elevation={4} sx={{ p: 2.5, borderRadius: 3, bgcolor: "#fcfdff", border: "1px solid #dce6f3" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
                     <Typography variant="subtitle1" fontWeight="bold">
@@ -623,33 +626,38 @@ function UserDashboard() {
                         p: 1.2,
                         borderRadius: 2,
                         bgcolor: "#f5f7fb",
-                        cursor: "grab",
+                        cursor: hasPreview ? "grab" : "not-allowed",
                         userSelect: "none",
                         touchAction: "none",
+                        opacity: hasPreview ? 1 : 0.6,
                       }}
-                      onPointerDown={(event) => handleDragStart(event, "side")}
+                      onPointerDown={(event) => { if (hasPreview) handleDragStart(event, "side"); else event.preventDefault(); }}
                     >
-                      <DragIndicatorIcon color="primary" />
+                      <DragIndicatorIcon color={hasPreview ? "primary" : "disabled"} />
                       <CheckCircleOutlinedIcon color="success" />
                       <Typography variant="body2" fontWeight={600}>Status</Typography>
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                      <CalendarTodayOutlinedIcon color="primary" />
-                      <Typography variant="body2" fontWeight={600}>Approved On</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                      <PersonOutlineOutlinedIcon color="primary" />
-                      <Typography variant="body2" fontWeight={600}>Approved By</Typography>
-                    </Box>
-                    <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                        <ImageOutlinedIcon color="secondary" />
-                        <Typography variant="body2" fontWeight={600}>Signature image</Typography>
-                      </Box>
-                    </Box>
+                    {isStatusPlacedOnPreview && (
+                      <>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                          <CalendarTodayOutlinedIcon color="primary" />
+                          <Typography variant="body2" fontWeight={600}>Approved On</Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                          <PersonOutlineOutlinedIcon color="primary" />
+                          <Typography variant="body2" fontWeight={600}>Approved By</Typography>
+                        </Box>
+                        <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <ImageOutlinedIcon color="secondary" />
+                            <Typography variant="body2" fontWeight={600}>Signature image</Typography>
+                          </Box>
+                        </Box>
+                      </>
+                    )}
                   </Stack>
                 </Paper>
-              )}
+
 
               {isDragging && (
                 <Box
