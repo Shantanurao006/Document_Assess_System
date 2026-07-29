@@ -46,6 +46,7 @@ function UserDashboard() {
   const previewContainerRef = useRef(null);
   const previewRefs = useRef([]);
   const [draggingDocIndex, setDraggingDocIndex] = useState(0);
+  const [draggingAnnotationIndex, setDraggingAnnotationIndex] = useState(null);
   const resizeRef = useRef(null);
   const hasPreview = documents.some((d) => !!d.previewUrl);
 
@@ -57,7 +58,7 @@ function UserDashboard() {
       if (dragSource === "preview") {
         const previewEl = previewRefs.current[draggingDocIndex] || previewContainerRef.current;
         const rect = previewEl?.getBoundingClientRect();
-        if (rect) {
+        if (rect && draggingAnnotationIndex != null) {
           const nextX = Math.min(
             Math.max(event.clientX - rect.left - statusSize.width / 2, 12),
             Math.max(rect.width - statusSize.width - 12, 12)
@@ -73,13 +74,15 @@ function UserDashboard() {
             const copy = [...prev];
             copy[draggingDocIndex] = { ...copy[draggingDocIndex] };
             copy[draggingDocIndex].annotations = copy[draggingDocIndex].annotations || [];
-            copy[draggingDocIndex].annotations[0] = {
+            const annotation = copy[draggingDocIndex].annotations[draggingAnnotationIndex] || {};
+            copy[draggingDocIndex].annotations[draggingAnnotationIndex] = {
+              ...annotation,
               type: "status",
               x: nextX,
               y: nextY,
               width: statusSize.width,
               height: statusSize.height,
-              text: copy[draggingDocIndex].annotations[0]?.text || "",
+              text: annotation.text || "",
             };
             return copy;
           });
@@ -118,20 +121,40 @@ function UserDashboard() {
         setIsStatusPlacedOnPreview(true);
         setDraggingDocIndex(targetIndex);
 
-        setDocuments((prev) => {
-          const copy = [...prev];
-          copy[targetIndex] = { ...copy[targetIndex] };
-          copy[targetIndex].annotations = copy[targetIndex].annotations || [];
-          copy[targetIndex].annotations[0] = {
+        if (dragSource === "side") {
+          const newAnnotation = {
+            id: Date.now() + Math.random(),
             type: "status",
             x: nextX,
             y: nextY,
             width: statusSize.width,
             height: statusSize.height,
-            text: copy[targetIndex].annotations[0]?.text || "",
+            text: "",
           };
-          return copy;
-        });
+          setDocuments((prev) => {
+            const copy = [...prev];
+            copy[targetIndex] = { ...copy[targetIndex] };
+            copy[targetIndex].annotations = copy[targetIndex].annotations || [];
+            copy[targetIndex].annotations = [...copy[targetIndex].annotations, newAnnotation];
+            setDraggingAnnotationIndex(copy[targetIndex].annotations.length - 1);
+            return copy;
+          });
+        } else {
+          const annotationIndex = draggingAnnotationIndex ?? 0;
+          setDocuments((prev) => {
+            const copy = [...prev];
+            copy[targetIndex] = { ...copy[targetIndex] };
+            copy[targetIndex].annotations = copy[targetIndex].annotations || [];
+            copy[targetIndex].annotations[annotationIndex] = {
+              ...copy[targetIndex].annotations[annotationIndex],
+              x: nextX,
+              y: nextY,
+              width: copy[targetIndex].annotations[annotationIndex]?.width || statusSize.width,
+              height: copy[targetIndex].annotations[annotationIndex]?.height || statusSize.height,
+            };
+            return copy;
+          });
+        }
       } else if (dragSource === "preview") {
         // keep it placed where it was
         setIsStatusPlacedOnPreview(true);
@@ -149,7 +172,7 @@ function UserDashboard() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [dragSource, isDragging]);
+  }, [dragSource, isDragging, draggingAnnotationIndex, statusSize]);
 
   const handleLogout = () => {
     clearUserSession();
@@ -177,6 +200,7 @@ function UserDashboard() {
         file: null,
         previewUrl: "",
         approvers: [{ email: "" }],
+        annotations: [],
       },
     ]);
   };
@@ -189,7 +213,7 @@ function UserDashboard() {
     }
 
     if (updatedDocuments.length === 0) {
-      updatedDocuments.push({ file: null, previewUrl: "", approvers: [{ email: "" }] });
+      updatedDocuments.push({ file: null, previewUrl: "", approvers: [{ email: "" }], annotations: [] });
     }
 
     setDocuments(updatedDocuments);
@@ -222,7 +246,7 @@ function UserDashboard() {
     documents.some((doc) => doc.file) &&
     documents.some((doc) => doc.approvers.some((app) => app.email.trim()));
 
-  const handleDragStart = (event, source = "side", documentIndex = 0) => {
+  const handleDragStart = (event, source = "side", documentIndex = 0, annotationIndex = null) => {
     event.preventDefault();
     event.stopPropagation();
     // only allow starting a drag from the side when a preview exists
@@ -235,13 +259,21 @@ function UserDashboard() {
     } catch (e) {
       // ignore capture errors
     }
+    if (source === "preview" && annotationIndex != null) {
+      const annotation = documents[documentIndex]?.annotations?.[annotationIndex];
+      if (annotation) {
+        setStatusPlacement({ x: annotation.x, y: annotation.y });
+        setStatusSize({ width: annotation.width, height: annotation.height });
+      }
+    }
     setDragSource(source);
     setDraggingDocIndex(documentIndex);
+    setDraggingAnnotationIndex(annotationIndex);
     setIsDragging(true);
     setDragGhostPosition({ x: event.clientX, y: event.clientY });
   };
 
-  const handleResizeStart = (event) => {
+  const handleResizeStart = (event, documentIndex, annotationIndex) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -254,6 +286,9 @@ function UserDashboard() {
       // ignore
     }
     // stop any active drag while resizing
+    setDragSource("preview");
+    setDraggingDocIndex(documentIndex);
+    setDraggingAnnotationIndex(annotationIndex);
     setIsDragging(false);
 
     const startX = event.clientX;
@@ -268,15 +303,17 @@ function UserDashboard() {
       // update annotation size live
       setDocuments((prev) => {
         const copy = [...prev];
-        copy[draggingDocIndex] = { ...copy[draggingDocIndex] };
-        copy[draggingDocIndex].annotations = copy[draggingDocIndex].annotations || [];
-        copy[draggingDocIndex].annotations[0] = {
+        copy[documentIndex] = { ...copy[documentIndex] };
+        copy[documentIndex].annotations = copy[documentIndex].annotations || [];
+        const annotation = copy[documentIndex].annotations[annotationIndex] || {};
+        copy[documentIndex].annotations[annotationIndex] = {
+          ...annotation,
           type: "status",
-          x: copy[draggingDocIndex].annotations[0]?.x ?? statusPlacement.x,
-          y: copy[draggingDocIndex].annotations[0]?.y ?? statusPlacement.y,
+          x: annotation.x ?? statusPlacement.x,
+          y: annotation.y ?? statusPlacement.y,
           width: nextWidth,
           height: nextHeight,
-          text: copy[draggingDocIndex].annotations[0]?.text || "",
+          text: annotation.text || "",
         };
         return copy;
       });
@@ -452,16 +489,17 @@ function UserDashboard() {
                             />
                           )}
 
-                          {isStatusPlacedOnPreview && (
+                          {document.annotations?.map((annotation, annotationIndex) => (
                             <Box
-                              ref={resizeRef}
+                              key={annotation.id || annotationIndex}
+                              ref={annotationIndex === draggingAnnotationIndex ? resizeRef : null}
                               sx={{
                                 position: "absolute",
-                                left: statusPlacement.x,
-                                top: statusPlacement.y,
+                                left: annotation.x,
+                                top: annotation.y,
                                 zIndex: 2,
-                                width: statusSize.width,
-                                minHeight: statusSize.height,
+                                width: annotation.width,
+                                minHeight: annotation.height,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -477,24 +515,19 @@ function UserDashboard() {
                                 touchAction: "none",
                                 overflow: "hidden",
                               }}
-                              onPointerDown={(event) => handleDragStart(event, "preview", documentIndex)}
+                              onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
                             >
                               <TextField
                                 variant="standard"
-                                value={documents[documentIndex].annotations?.[0]?.text || ""
-                                }
+                                value={annotation.text || ""}
                                 onChange={(event) => {
                                   const nextText = event.target.value;
                                   setDocuments((prev) => {
                                     const copy = [...prev];
                                     copy[documentIndex] = { ...copy[documentIndex] };
                                     copy[documentIndex].annotations = copy[documentIndex].annotations || [];
-                                    copy[documentIndex].annotations[0] = {
-                                      type: "status",
-                                      x: statusPlacement.x,
-                                      y: statusPlacement.y,
-                                      width: statusSize.width,
-                                      height: statusSize.height,
+                                    copy[documentIndex].annotations[annotationIndex] = {
+                                      ...copy[documentIndex].annotations[annotationIndex],
                                       text: nextText,
                                     };
                                     return copy;
@@ -516,10 +549,10 @@ function UserDashboard() {
                                   borderBottom: "4px solid #ef6c00",
                                   cursor: "nwse-resize",
                                 }}
-                                onPointerDown={handleResizeStart}
+                                onPointerDown={(event) => handleResizeStart(event, documentIndex, annotationIndex)}
                               />
                             </Box>
-                          )}
+                          ))}
                         </>
                       ) : (
                         <Box
