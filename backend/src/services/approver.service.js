@@ -5,6 +5,39 @@ const fs = require("fs");
 const signPdf = require("../utils/pdfSigner");
 const { uploadsDir, signaturesDir } = require("../config/uploadPaths");
 
+const DEFAULT_APPROVAL_BOX = {
+    type: "status",
+    x: 50,
+    y: 50,
+    width: 240,
+    height: 156,
+    fields: [
+        "Signature",
+        "Approved By",
+        "Approved On",
+        "Status",
+    ],
+};
+
+const getApprovalBoxLayout = (approvalBoxConfig) => {
+    if (!Array.isArray(approvalBoxConfig) || approvalBoxConfig.length === 0) {
+        return DEFAULT_APPROVAL_BOX;
+    }
+
+    const [savedBox] = approvalBoxConfig;
+
+    return {
+        ...DEFAULT_APPROVAL_BOX,
+        ...savedBox,
+        fields: Array.isArray(savedBox.fields) && savedBox.fields.length > 0
+            ? savedBox.fields
+            : DEFAULT_APPROVAL_BOX.fields,
+    };
+};
+
+const getApprovalGroupKey = (assignment) =>
+    assignment.approval_group_id || assignment.stored_file_name;
+
 const validateApprover = async (email) => {
 
     const user = await repository.findUserByEmail(email);
@@ -63,6 +96,7 @@ const admin = adminResult.rows[0];
         SELECT
             stored_file_name,
             approval_group_id,
+            approval_box_config,
             uploaded_by,
             approval_order,
             assigned_to
@@ -97,7 +131,7 @@ const admin = adminResult.rows[0];
         `,
         [
             assignment.uploaded_by,
-            assignment.approval_group_id || assignment.stored_file_name,
+            getApprovalGroupKey(assignment),
             assignment.approval_order,
         ]
     );
@@ -111,6 +145,9 @@ const admin = adminResult.rows[0];
     }
 
     const storedFileName = assignment.stored_file_name;
+    const approvalBoxLayout = getApprovalBoxLayout(
+        assignment.approval_box_config
+    );
 
     const originalPdfPath = path.join(
         uploadsDir,
@@ -156,12 +193,61 @@ console.log("PDF Exists:", fs.existsSync(originalPdfPath));
 
 console.log("Files in uploads:", fs.readdirSync(uploadsDir));
 
+const approvalHistoryResult = await pool.query(
+    `
+    SELECT
+        da.id,
+        da.approval_order,
+        da.status,
+        da.approved_datetime,
+        da.signed_by_image,
+        approver_user.email AS assigned_email,
+        approved_user.email AS approved_by_email
+    FROM document_assignments da
+    INNER JOIN users approver_user
+        ON da.assigned_to = approver_user.id
+    LEFT JOIN users approved_user
+        ON da.approved_by = approved_user.id
+    WHERE da.uploaded_by = $1
+        AND COALESCE(da.approval_group_id, da.stored_file_name) = $2
+    ORDER BY da.approval_order ASC
+    `,
+    [
+        assignment.uploaded_by,
+        getApprovalGroupKey(assignment),
+    ]
+);
+
+const approvalEntries = approvalHistoryResult.rows
+    .filter((historyRow) =>
+        historyRow.id === Number(documentId)
+            ? true
+            : Boolean(historyRow.approved_datetime)
+    )
+    .map((historyRow) => ({
+        approvalOrder: historyRow.approval_order,
+        status: historyRow.id === Number(documentId) ? status : historyRow.status,
+        approvedOn:
+            historyRow.id === Number(documentId)
+                ? approvalDateTime
+                : historyRow.approved_datetime,
+        approvedBy:
+            historyRow.id === Number(documentId)
+                ? admin.email
+                : historyRow.approved_by_email || historyRow.assigned_email,
+        signaturePath:
+            historyRow.id === Number(documentId)
+                ? uploadedSignaturePath
+                : historyRow.signed_by_image
+                    ? path.join(signaturesDir, historyRow.signed_by_image)
+                    : null,
+    }))
+    .filter((entry) => entry.approvedOn);
+
 const signedPdfPath = await signPdf(
     originalPdfPath,
-    uploadedSignaturePath,
-    status,
-    approvalDateTime,
-    admin.email
+    approvalEntries,
+    approvalBoxLayout
 );
 
     // Update DB

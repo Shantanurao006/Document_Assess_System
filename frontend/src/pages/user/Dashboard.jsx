@@ -24,6 +24,13 @@ import { uploadDocuments } from "../../api/uploadApi";
 import { validateApprover } from "../../api/approverApi";
 import { clearUserSession, getStoredUser } from "../../auth/session";
 
+const APPROVAL_BOX_FIELDS = [
+  "Signature",
+  "Approved By",
+  "Approved On",
+  "Status",
+];
+
 function UserDashboard() {
   const navigate = useNavigate();
   const user = getStoredUser();
@@ -41,7 +48,7 @@ function UserDashboard() {
   const [dragGhostPosition, setDragGhostPosition] = useState({ x: 0, y: 0 });
   const [isStatusPlacedOnPreview, setIsStatusPlacedOnPreview] = useState(false);
   const [statusPlacement, setStatusPlacement] = useState({ x: 16, y: 16 });
-  const [statusSize, setStatusSize] = useState({ width: 170, height: 56 });
+  const [statusSize, setStatusSize] = useState({ width: 240, height: 156 });
   const [dragSource, setDragSource] = useState("side");
   const previewContainerRef = useRef(null);
   const previewRefs = useRef([]);
@@ -49,6 +56,11 @@ function UserDashboard() {
   const [draggingAnnotationIndex, setDraggingAnnotationIndex] = useState(null);
   const resizeRef = useRef(null);
   const hasPreview = documents.some((d) => !!d.previewUrl);
+
+  const hasApprovalBox = (document) =>
+    (document.annotations || []).some(
+      (annotation) => annotation.type === "status"
+    );
 
   useEffect(() => {
     if (!isDragging) return undefined;
@@ -82,7 +94,7 @@ function UserDashboard() {
               y: nextY,
               width: statusSize.width,
               height: statusSize.height,
-              text: annotation.text || "",
+              fields: annotation.fields || APPROVAL_BOX_FIELDS,
             };
             return copy;
           });
@@ -129,7 +141,7 @@ function UserDashboard() {
             y: nextY,
             width: statusSize.width,
             height: statusSize.height,
-            text: "",
+            fields: APPROVAL_BOX_FIELDS,
           };
           setDocuments((prev) => {
             const copy = [...prev];
@@ -243,6 +255,7 @@ function UserDashboard() {
   };
 
   const canSubmit =
+    documents.every((doc) => !doc.file || hasApprovalBox(doc)) &&
     documents.some((doc) => doc.file) &&
     documents.some((doc) => doc.approvers.some((app) => app.email.trim()));
 
@@ -261,9 +274,9 @@ function UserDashboard() {
     }
     if (source === "preview" && annotationIndex != null) {
       const annotation = documents[documentIndex]?.annotations?.[annotationIndex];
-      if (annotation) {
-        setStatusPlacement({ x: annotation.x, y: annotation.y });
-        setStatusSize({ width: annotation.width, height: annotation.height });
+          if (annotation) {
+            setStatusPlacement({ x: annotation.x, y: annotation.y });
+            setStatusSize({ width: annotation.width, height: annotation.height });
       }
     }
     setDragSource(source);
@@ -313,7 +326,7 @@ function UserDashboard() {
           y: annotation.y ?? statusPlacement.y,
           width: nextWidth,
           height: nextHeight,
-          text: annotation.text || "",
+          fields: annotation.fields || APPROVAL_BOX_FIELDS,
         };
         return copy;
       });
@@ -350,6 +363,11 @@ function UserDashboard() {
 
         const emails = document.approvers.map((approver) => approver.email.trim()).filter(Boolean);
 
+        if (!hasApprovalBox(document)) {
+          alert(`Please place the approval box on Document ${i + 1} before submitting.`);
+          return;
+        }
+
         if (emails.length === 0) {
           alert(`Please enter at least one approver email for Document ${i + 1}.`);
           return;
@@ -368,7 +386,7 @@ function UserDashboard() {
       const response = await uploadDocuments(documents, user.email);
       alert(response.message);
 
-      setDocuments([{ file: null, previewUrl: "", approvers: [{ email: "" }] }]);
+      setDocuments([{ file: null, previewUrl: "", approvers: [{ email: "" }], annotations: [] }]);
     } catch (error) {
       alert(error.response?.data?.message || "Validation failed.");
     } finally {
@@ -450,6 +468,20 @@ function UserDashboard() {
                             ? `${(document.file.size / 1024).toFixed(2)} KB - ${document.file.type || "Unknown"}`
                             : "Choose a file to attach to this document."}
                         </Typography>
+                        {document.file && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              mt: 0.8,
+                              color: hasApprovalBox(document) ? "success.main" : "warning.main",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {hasApprovalBox(document)
+                              ? "Approval box placed"
+                              : "Place the approval box on this document before upload"}
+                          </Typography>
+                        )}
                       </Box>
 
                       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -518,17 +550,13 @@ function UserDashboard() {
                               onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
                             >
                               <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
-                                Status
+                                Approval Box
                               </Typography>
-                              <Typography variant="body2" sx={{ color: "#424242" }}>
-                                Approved On
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: "#424242" }}>
-                                Approved By
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: "#424242" }}>
-                                Signature
-                              </Typography>
+                              {(annotation.fields || APPROVAL_BOX_FIELDS).map((fieldLabel) => (
+                                <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
+                                  {fieldLabel}
+                                </Typography>
+                              ))}
                               <Box
                                 sx={{
                                   position: "absolute",
@@ -646,9 +674,10 @@ function UserDashboard() {
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        p: 1.2,
+                        flexDirection: "column",
+                        alignItems: "stretch",
+                        gap: 1.1,
+                        p: 1.4,
                         borderRadius: 2,
                         bgcolor: "#f5f7fb",
                         cursor: hasPreview ? "grab" : "not-allowed",
@@ -658,9 +687,16 @@ function UserDashboard() {
                       }}
                       onPointerDown={(event) => { if (hasPreview) handleDragStart(event, "side"); else event.preventDefault(); }}
                     >
-                      <DragIndicatorIcon color={hasPreview ? "primary" : "disabled"} />
-                      <CheckCircleOutlinedIcon color="success" />
-                      <Typography variant="body2" fontWeight={600}>Status</Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <DragIndicatorIcon color={hasPreview ? "primary" : "disabled"} />
+                        <CheckCircleOutlinedIcon color="success" />
+                        <Typography variant="body2" fontWeight={700}>Approval Box</Typography>
+                      </Box>
+                      {APPROVAL_BOX_FIELDS.map((fieldLabel) => (
+                        <Typography key={fieldLabel} variant="body2" sx={{ color: "text.secondary", pl: 0.5 }}>
+                          {fieldLabel}
+                        </Typography>
+                      ))}
                     </Box>
                   </Stack>
                 </Paper>
@@ -686,11 +722,20 @@ function UserDashboard() {
                     boxShadow: 1,
                     zIndex: 10,
                     pointerEvents: "none",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
                   }}
                 >
                   <Typography variant="body2" sx={{ color: "#ef6c00", fontWeight: 700 }}>
-                    Status
+                    Approval Box
                   </Typography>
+                  {APPROVAL_BOX_FIELDS.map((fieldLabel) => (
+                    <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
+                      {fieldLabel}
+                    </Typography>
+                  ))}
                 </Box>
               )}
             </Box>

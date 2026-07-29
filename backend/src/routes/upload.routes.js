@@ -75,6 +75,9 @@ const { uploadedBy } = req.body;
 const approverEmailValues = Array.isArray(req.body.approverEmails)
     ? req.body.approverEmails
     : [req.body.approverEmails];
+const approvalBoxConfigValues = Array.isArray(req.body.approvalBoxConfig)
+    ? req.body.approvalBoxConfig
+    : [req.body.approvalBoxConfig];
 
 const approversByFile = approverEmailValues.map((value) => {
     try {
@@ -84,11 +87,33 @@ const approversByFile = approverEmailValues.map((value) => {
         return [value];
     }
 });
+const approvalBoxesByFile = approvalBoxConfigValues.map((value) => {
+    try {
+        const parsedValue = JSON.parse(value);
+        return Array.isArray(parsedValue) ? parsedValue : [];
+    } catch {
+        return [];
+    }
+});
 
 if (approversByFile.length !== req.files.length) {
     return res.status(400).json({
         success: false,
         message: "Each uploaded file must have at least one approver.",
+    });
+}
+
+if (approvalBoxesByFile.length !== req.files.length) {
+    return res.status(400).json({
+        success: false,
+        message: "Each uploaded file must include its approval box layout.",
+    });
+}
+
+if (approvalBoxesByFile.some((approvalBoxes) => !Array.isArray(approvalBoxes) || approvalBoxes.length === 0)) {
+    return res.status(400).json({
+        success: false,
+        message: "Please place the approval box on every document before uploading.",
     });
 }
 
@@ -144,11 +169,12 @@ for (let i = 0; i < req.files.length; i++) {
                 uploaded_by,
                 assigned_to,
                 approval_group_id,
+                approval_box_config,
                 approval_order,
                 status
             )
             VALUES
-            ($1,$2,$3,$4,$5,$6,$7)
+            ($1,$2,$3,$4,$5,$6,$7,$8)
             `,
             [
                 file.originalname,
@@ -156,6 +182,7 @@ for (let i = 0; i < req.files.length; i++) {
                 uploadedByUser.rows[0].id,
                 approverUser.rows[0].id,
                 approvalGroupId,
+                JSON.stringify(approvalBoxesByFile[i]),
                 approvalIndex + 1,
                 "Pending",
             ]

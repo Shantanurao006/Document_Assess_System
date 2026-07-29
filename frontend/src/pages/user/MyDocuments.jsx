@@ -186,6 +186,10 @@ return (
                 </TableCell>
 
                 <TableCell>
+                  <b>Progress</b>
+                </TableCell>
+
+                <TableCell>
                   <b>Status</b>
                 </TableCell>
 
@@ -204,7 +208,7 @@ return (
                 <TableRow>
 
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     align="center"
                   >
                     No Documents Found
@@ -235,6 +239,19 @@ return (
     ? new Date(doc.uploaded_datetime).toLocaleString()
     : "-"}
 </TableCell>
+
+                    <TableCell>
+                      <Typography variant="body2" fontWeight="bold">
+                        {doc.completed_approvals} of {doc.total_approvers} approvals completed
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {doc.status === "Approved"
+                          ? "Final signed PDF is ready"
+                          : doc.status === "Rejected"
+                          ? "Approval chain stopped"
+                          : "Waiting for the current approver"}
+                      </Typography>
+                    </TableCell>
 
                     <TableCell>
 

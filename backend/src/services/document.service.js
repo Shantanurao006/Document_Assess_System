@@ -16,6 +16,8 @@ exports.getMyDocuments = async (req, res) => {
                 da.assigned_datetime AS uploaded_datetime,
                 da.approved_datetime,
                 da.signed_pdf_name,
+                approval_stats.total_approvers,
+                approval_stats.completed_approvals,
                 CASE
                     WHEN da.status = 'Pending' AND blocked_by.email IS NOT NULL
                         THEN 'Pending approval from ' || blocked_by.email
@@ -30,6 +32,15 @@ exports.getMyDocuments = async (req, res) => {
                 ON da.uploaded_by = uploaded_user.id
             INNER JOIN users assigned_user
                 ON da.assigned_to = assigned_user.id
+            INNER JOIN LATERAL (
+                SELECT
+                    COUNT(*)::int AS total_approvers,
+                    COUNT(*) FILTER (WHERE grouped_da.status = 'Approved')::int AS completed_approvals
+                FROM document_assignments grouped_da
+                WHERE grouped_da.uploaded_by = da.uploaded_by
+                    AND COALESCE(grouped_da.approval_group_id, grouped_da.stored_file_name)
+                        = COALESCE(da.approval_group_id, da.stored_file_name)
+            ) approval_stats ON true
             LEFT JOIN users approved_user
                 ON da.approved_by = approved_user.id
             LEFT JOIN LATERAL (

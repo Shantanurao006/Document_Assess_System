@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Stack,
 } from "@mui/material";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -49,6 +50,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
+
+const DEFAULT_APPROVAL_BOX_FIELDS = [
+  "Signature",
+  "Approved By",
+  "Approved On",
+  "Status",
+];
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -241,9 +249,13 @@ const [signaturePreview, setSignaturePreview] = useState("");
               <b>Assigned Date</b>
             </TableCell>
 
-            <TableCell>
-              <b>Status</b>
-            </TableCell>
+                <TableCell>
+                  <b>Approval Step</b>
+                </TableCell>
+
+                <TableCell>
+                  <b>Status</b>
+                </TableCell>
 
             <TableCell align="center">
               <b>View</b>
@@ -255,7 +267,7 @@ const [signaturePreview, setSignaturePreview] = useState("");
           {documents.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={5}
+                colSpan={7}
                 align="center"
               >
                 No Documents Assigned
@@ -278,6 +290,15 @@ const [signaturePreview, setSignaturePreview] = useState("");
                   {new Date(
                     doc.assigned_datetime
                   ).toLocaleString()}
+                </TableCell>
+
+                <TableCell>
+                  <Typography variant="body2" fontWeight="bold">
+                    Step {doc.approval_order} of {doc.total_approvers}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {doc.completed_approvals} completed before this review
+                  </Typography>
                 </TableCell>
 
                 <TableCell>
@@ -329,41 +350,84 @@ const [signaturePreview, setSignaturePreview] = useState("");
   </Typography>
 
   {selectedDocument && (
-    selectedDocument.stored_file_name
-      .toLowerCase()
-      .endsWith(".pdf") ? (
+    <Stack spacing={0.5} sx={{ mb: 2 }}>
+      <Typography variant="body2" fontWeight="bold">
+        Approval step: {selectedDocument.approval_order} of {selectedDocument.total_approvers}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        Completed approvals before this step: {selectedDocument.completed_approvals}
+      </Typography>
+    </Stack>
+  )}
 
- <Document
-  file={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
-  onLoadSuccess={onDocumentLoadSuccess}
-  onLoadError={(error) => {
-    console.error("PDF Load Error:", error);
-  }}
-  loading={<Typography>Loading PDF...</Typography>}
-  error={<Typography color="error">Unable to load PDF.</Typography>}
->
-  {Array.from(new Array(numPages), (_, index) => (
-    <Page
-      key={`page_${index + 1}`}
-      pageNumber={index + 1}
-      width={700}
-    />
-  ))}
-</Document>
+  {selectedDocument && (
+    <Box sx={{ position: "relative", display: "inline-block", maxWidth: "100%" }}>
+      {selectedDocument.stored_file_name
+        .toLowerCase()
+        .endsWith(".pdf") ? (
+          <Document
+            file={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={(error) => {
+              console.error("PDF Load Error:", error);
+            }}
+            loading={<Typography>Loading PDF...</Typography>}
+            error={<Typography color="error">Unable to load PDF.</Typography>}
+          >
+            {Array.from(new Array(numPages), (_, index) => (
+              <Page
+                key={`page_${index + 1}`}
+                pageNumber={index + 1}
+                width={700}
+              />
+            ))}
+          </Document>
+        ) : (
+          <img
+            src={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
+            alt={selectedDocument.original_file_name}
+            style={{
+              width: "100%",
+              maxHeight: "650px",
+              objectFit: "contain",
+            }}
+          />
+        )}
 
-    ) : (
-
-      <img
-        src={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
-        alt={selectedDocument.original_file_name}
-        style={{
-          width: "100%",
-          maxHeight: "650px",
-          objectFit: "contain",
-        }}
-      />
-
-    )
+      {Array.isArray(selectedDocument.approval_box_config) &&
+        selectedDocument.approval_box_config.length > 0 &&
+        selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => (
+          <Box
+            key={`${selectedDocument.id}-approval-box-${approvalBoxIndex}`}
+            sx={{
+              position: "absolute",
+              left: approvalBox.x ?? 16,
+              top: approvalBox.y ?? 16,
+              width: approvalBox.width ?? 240,
+              minHeight: approvalBox.height ?? 156,
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.35,
+              px: 1.4,
+              py: 1,
+              borderRadius: 2,
+              bgcolor: "rgba(255,245,230,0.28)",
+              border: "2px dashed #ffb74d",
+              boxShadow: 1,
+              pointerEvents: "none",
+            }}
+          >
+            <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
+              Approval Box Preview
+            </Typography>
+            {(approvalBox.fields || DEFAULT_APPROVAL_BOX_FIELDS).map((fieldLabel) => (
+              <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
+                {fieldLabel}
+              </Typography>
+            ))}
+          </Box>
+        ))}
+    </Box>
   )}
 
 <Box mt={4}>

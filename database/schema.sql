@@ -60,6 +60,7 @@ CREATE TABLE document_assignments (
     uploaded_by INTEGER NOT NULL,
     assigned_to INTEGER NOT NULL,
     approval_group_id VARCHAR(255),
+    approval_box_config JSONB NOT NULL DEFAULT '[]'::jsonb,
     approval_order INTEGER NOT NULL DEFAULT 1,
     approved_by INTEGER,
 

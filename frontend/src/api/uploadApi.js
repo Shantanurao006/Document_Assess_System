@@ -21,10 +21,24 @@ export const uploadDocuments = async (
         const approverEmails = (document.approvers || []).map(
             (approver) => approver.email
         );
+        const approvalBoxConfig = (document.annotations || [])
+            .filter((annotation) => annotation.type === "status")
+            .map((annotation) => ({
+                type: annotation.type,
+                x: annotation.x,
+                y: annotation.y,
+                width: annotation.width,
+                height: annotation.height,
+                fields: annotation.fields || [],
+            }));
 
         formData.append(
             "approverEmails",
             JSON.stringify(approverEmails)
+        );
+        formData.append(
+            "approvalBoxConfig",
+            JSON.stringify(approvalBoxConfig)
         );
     });
 

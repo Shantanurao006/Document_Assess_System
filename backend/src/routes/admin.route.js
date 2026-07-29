@@ -22,13 +22,25 @@ router.get("/documents/:adminId", async (req, res) => {
                 da.id,
                 da.original_file_name,
                 da.stored_file_name,
+                da.approval_box_config,
                 da.assigned_datetime,
                 da.status,
                 da.approval_order,
+                approval_stats.total_approvers,
+                approval_stats.completed_approvals,
                 u.email AS uploaded_by_email
             FROM document_assignments da
             INNER JOIN users u
                 ON da.uploaded_by = u.id
+            INNER JOIN LATERAL (
+                SELECT
+                    COUNT(*)::int AS total_approvers,
+                    COUNT(*) FILTER (WHERE grouped_da.status = 'Approved')::int AS completed_approvals
+                FROM document_assignments grouped_da
+                WHERE grouped_da.uploaded_by = da.uploaded_by
+                    AND COALESCE(grouped_da.approval_group_id, grouped_da.stored_file_name)
+                        = COALESCE(da.approval_group_id, da.stored_file_name)
+            ) approval_stats ON true
             WHERE da.assigned_to = $1
                 AND NOT EXISTS (
                     SELECT 1
