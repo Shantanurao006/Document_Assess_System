@@ -36,26 +36,49 @@ function UserDashboard() {
     },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [panelPosition, setPanelPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef({ x: 0, y: 0 });
+  const [dragGhostPosition, setDragGhostPosition] = useState({ x: 0, y: 0 });
+  const [isPlacedOnPreview, setIsPlacedOnPreview] = useState(false);
+  const [previewPlacement, setPreviewPlacement] = useState({ x: 16, y: 16 });
+  const [dragSource, setDragSource] = useState("side");
+  const previewContainerRef = useRef(null);
 
   useEffect(() => {
     if (!isDragging) return undefined;
 
     const handlePointerMove = (event) => {
-      const deltaX = event.clientX - dragStartRef.current.x;
-      const deltaY = event.clientY - dragStartRef.current.y;
-
-      setPanelPosition((prev) => ({
-        x: Math.max(-140, Math.min(140, prev.x + deltaX)),
-        y: Math.max(-100, Math.min(100, prev.y + deltaY)),
-      }));
-
-      dragStartRef.current = { x: event.clientX, y: event.clientY };
+      setDragGhostPosition({ x: event.clientX, y: event.clientY });
     };
 
-    const handlePointerUp = () => setIsDragging(false);
+    const handlePointerUp = (event) => {
+      const previewRect = previewContainerRef.current?.getBoundingClientRect();
+      const insidePreview =
+        previewRect &&
+        event.clientX >= previewRect.left &&
+        event.clientX <= previewRect.right &&
+        event.clientY >= previewRect.top &&
+        event.clientY <= previewRect.bottom;
+
+      if (insidePreview) {
+        const nextX = Math.min(
+          Math.max(event.clientX - previewRect.left - 120, 12),
+          Math.max(previewRect.width - 240, 12)
+        );
+        const nextY = Math.min(
+          Math.max(event.clientY - previewRect.top - 70, 12),
+          Math.max(previewRect.height - 180, 12)
+        );
+
+        setPreviewPlacement({ x: nextX, y: nextY });
+        setIsPlacedOnPreview(true);
+      } else if (dragSource === "preview") {
+        setIsPlacedOnPreview(true);
+      } else {
+        setIsPlacedOnPreview(false);
+      }
+
+      setIsDragging(false);
+    };
 
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
@@ -64,7 +87,7 @@ function UserDashboard() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [isDragging]);
+  }, [dragSource, isDragging]);
 
   const handleLogout = () => {
     clearUserSession();
@@ -137,9 +160,12 @@ function UserDashboard() {
     documents.some((doc) => doc.file) &&
     documents.some((doc) => doc.approvers.some((app) => app.email.trim()));
 
-  const handleDragStart = (event) => {
+  const handleDragStart = (event, source = "side") => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragSource(source);
     setIsDragging(true);
-    dragStartRef.current = { x: event.clientX, y: event.clientY };
+    setDragGhostPosition({ x: event.clientX, y: event.clientY });
   };
 
   const handleSubmit = async () => {
@@ -286,21 +312,79 @@ function UserDashboard() {
                       </Box>
                     </Box>
 
-                    <Box sx={{ mb: 3 }}>
+                    <Box sx={{ mb: 3, position: "relative" }} ref={previewContainerRef}>
                       {document.previewUrl ? (
-                        document.file?.type.startsWith("image/") ? (
-                          <img
-                            src={document.previewUrl}
-                            alt={document.file?.name || "Document preview"}
-                            style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12 }}
-                          />
-                        ) : (
-                          <iframe
-                            title={document.file?.name || "Document preview"}
-                            src={document.previewUrl}
-                            style={{ width: "100%", height: 360, border: "none", borderRadius: 12 }}
-                          />
-                        )
+                        <>
+                          {document.file?.type.startsWith("image/") ? (
+                            <img
+                              src={document.previewUrl}
+                              alt={document.file?.name || "Document preview"}
+                              style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12 }}
+                            />
+                          ) : (
+                            <iframe
+                              title={document.file?.name || "Document preview"}
+                              src={document.previewUrl}
+                              style={{ width: "100%", height: 360, border: "none", borderRadius: 12 }}
+                            />
+                          )}
+
+                          {isPlacedOnPreview && (
+                            <Paper
+                              elevation={4}
+                              sx={{
+                                position: "absolute",
+                                left: previewPlacement.x,
+                                top: previewPlacement.y,
+                                width: 240,
+                                p: 2,
+                                borderRadius: 3,
+                                bgcolor: "#fcfdff",
+                                border: "1px solid #dce6f3",
+                                zIndex: 2,
+                                cursor: "grab",
+                                userSelect: "none",
+                                touchAction: "none",
+                              }}
+                              onPointerDown={(event) => handleDragStart(event, "preview")}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                  mb: 1.5,
+                                }}
+                              >
+                                <DragIndicatorIcon color="primary" />
+                                <Typography variant="subtitle2" fontWeight="bold">
+                                  Approval Summary
+                                </Typography>
+                              </Box>
+
+                              <Stack spacing={1}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                                  <CheckCircleOutlinedIcon color="success" />
+                                  <Typography variant="body2" fontWeight={600}>Status</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                                  <CalendarTodayOutlinedIcon color="primary" />
+                                  <Typography variant="body2" fontWeight={600}>Approved On</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                                  <PersonOutlineOutlinedIcon color="primary" />
+                                  <Typography variant="body2" fontWeight={600}>Approved By</Typography>
+                                </Box>
+                                <Box sx={{ p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.7 }}>
+                                    <ImageOutlinedIcon color="secondary" />
+                                    <Typography variant="body2" fontWeight={600}>Signature image</Typography>
+                                  </Box>
+                                </Box>
+                              </Stack>
+                            </Paper>
+                          )}
+                        </>
                       ) : (
                         <Box
                           sx={{
@@ -389,65 +473,84 @@ function UserDashboard() {
             </Box>
 
             <Box sx={{ width: { xs: "100%", lg: 320 }, minHeight: 320, position: "relative" }}>
-              <Paper
-                elevation={4}
-                sx={{
-                  p: 2.5,
-                  borderRadius: 3,
-                  transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)`,
-                  transition: isDragging ? "none" : "transform 0.2s ease",
-                  position: "relative",
-                  bgcolor: "#fcfdff",
-                  border: "1px solid #dce6f3",
-                }}
-              >
-                <Box
+              {!isPlacedOnPreview && (
+                <Paper
+                  elevation={4}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mb: 2,
+                    p: 2.5,
+                    borderRadius: 3,
+                    bgcolor: "#fcfdff",
+                    border: "1px solid #dce6f3",
                     cursor: "grab",
                     userSelect: "none",
+                    touchAction: "none",
                   }}
-                  onPointerDown={handleDragStart}
+                  onPointerDown={(event) => handleDragStart(event, "side")}
                 >
-                  <DragIndicatorIcon color="primary" />
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Approval Summary
-                  </Typography>
-                </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                    <DragIndicatorIcon color="primary" />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Approval Summary
+                    </Typography>
+                  </Box>
 
-                <Stack spacing={1.5}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Stack spacing={1.5}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
                       <CheckCircleOutlinedIcon color="success" />
                       <Typography variant="body2" fontWeight={600}>Status</Typography>
                     </Box>
-                  </Box>
-
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
                       <CalendarTodayOutlinedIcon color="primary" />
                       <Typography variant="body2" fontWeight={600}>Approved On</Typography>
                     </Box>
-                  </Box>
-
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
                       <PersonOutlineOutlinedIcon color="primary" />
                       <Typography variant="body2" fontWeight={600}>Approved By</Typography>
                     </Box>
-                  </Box>
-
-                  <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                      <ImageOutlinedIcon color="secondary" />
-                      <Typography variant="body2" fontWeight={600}>Signature image</Typography>
+                    <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                        <ImageOutlinedIcon color="secondary" />
+                        <Typography variant="body2" fontWeight={600}>Signature image</Typography>
+                      </Box>
                     </Box>
+                  </Stack>
+                </Paper>
+              )}
+
+              {isDragging && (
+                <Paper
+                  elevation={8}
+                  sx={{
+                    position: "fixed",
+                    left: dragGhostPosition.x - 120,
+                    top: dragGhostPosition.y - 70,
+                    width: 240,
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: "#fcfdff",
+                    border: "1px solid #dce6f3",
+                    zIndex: 10,
+                    pointerEvents: "none",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                    <DragIndicatorIcon color="primary" />
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      Approval Summary
+                    </Typography>
                   </Box>
-                </Stack>
-              </Paper>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                      <CheckCircleOutlinedIcon color="success" />
+                      <Typography variant="body2" fontWeight={600}>Status</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 0.8, borderRadius: 2, bgcolor: "#f5f7fb" }}>
+                      <CalendarTodayOutlinedIcon color="primary" />
+                      <Typography variant="body2" fontWeight={600}>Approved On</Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
+              )}
             </Box>
           </Box>
         </Paper>
