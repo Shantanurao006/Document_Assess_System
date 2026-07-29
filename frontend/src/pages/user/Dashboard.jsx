@@ -501,9 +501,9 @@ function UserDashboard() {
                                 width: annotation.width,
                                 minHeight: annotation.height,
                                 display: "flex",
-                                alignItems: "center",
+                                flexDirection: "column",
                                 justifyContent: "center",
-                                gap: 1,
+                                gap: 0.35,
                                 px: 1.4,
                                 py: 1,
                                 borderRadius: 6,
@@ -517,26 +517,18 @@ function UserDashboard() {
                               }}
                               onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
                             >
-                              <TextField
-                                variant="standard"
-                                value={annotation.text || ""}
-                                onChange={(event) => {
-                                  const nextText = event.target.value;
-                                  setDocuments((prev) => {
-                                    const copy = [...prev];
-                                    copy[documentIndex] = { ...copy[documentIndex] };
-                                    copy[documentIndex].annotations = copy[documentIndex].annotations || [];
-                                    copy[documentIndex].annotations[annotationIndex] = {
-                                      ...copy[documentIndex].annotations[annotationIndex],
-                                      text: nextText,
-                                    };
-                                    return copy;
-                                  });
-                                }}
-                                inputProps={{ style: { color: "#ef6c00", fontWeight: 700, textAlign: "center" } }}
-                                sx={{ width: "100%" }}
-                                size="small"
-                              />
+                              <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
+                                Status
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: "#424242" }}>
+                                Approved On
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: "#424242" }}>
+                                Approved By
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: "#424242" }}>
+                                Signature
+                              </Typography>
                               <Box
                                 sx={{
                                   position: "absolute",
@@ -670,24 +662,6 @@ function UserDashboard() {
                       <CheckCircleOutlinedIcon color="success" />
                       <Typography variant="body2" fontWeight={600}>Status</Typography>
                     </Box>
-                    {isStatusPlacedOnPreview && (
-                      <>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                          <CalendarTodayOutlinedIcon color="primary" />
-                          <Typography variant="body2" fontWeight={600}>Approved On</Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                          <PersonOutlineOutlinedIcon color="primary" />
-                          <Typography variant="body2" fontWeight={600}>Approved By</Typography>
-                        </Box>
-                        <Box sx={{ p: 1.2, borderRadius: 2, bgcolor: "#f5f7fb" }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-                            <ImageOutlinedIcon color="secondary" />
-                            <Typography variant="body2" fontWeight={600}>Signature image</Typography>
-                          </Box>
-                        </Box>
-                      </>
-                    )}
                   </Stack>
                 </Paper>
 
