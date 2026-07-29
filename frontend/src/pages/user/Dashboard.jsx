@@ -224,6 +224,14 @@ function UserDashboard() {
   const handleDragStart = (event, source = "side", documentIndex = 0) => {
     event.preventDefault();
     event.stopPropagation();
+    try {
+      // capture the pointer so pointermove/up continue even when over an iframe
+      if (event.pointerId && event.currentTarget && event.currentTarget.setPointerCapture) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+    } catch (e) {
+      // ignore capture errors
+    }
     setDragSource(source);
     setDraggingDocIndex(documentIndex);
     setIsDragging(true);
@@ -234,6 +242,14 @@ function UserDashboard() {
     event.preventDefault();
     event.stopPropagation();
 
+    try {
+      // capture the pointer so resizing continues if pointer moves over iframe
+      if (event.pointerId && event.currentTarget && event.currentTarget.setPointerCapture) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+    } catch (e) {
+      // ignore
+    }
     // stop any active drag while resizing
     setIsDragging(false);
 
