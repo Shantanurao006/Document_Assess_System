@@ -220,7 +220,7 @@ function UserDashboard() {
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {document.file
-                        ? `${(document.file.size / 1024).toFixed(2)} KB • ${document.file.type || "Unknown"}`
+                        ? `${(document.file.size / 1024).toFixed(2)} KB - ${document.file.type || "Unknown"}`
                         : "Choose a file to attach to this document."}
                     </Typography>
                   </Box>
