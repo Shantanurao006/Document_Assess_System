@@ -43,6 +43,8 @@ function UserDashboard() {
   const [statusSize, setStatusSize] = useState({ width: 170, height: 56 });
   const [dragSource, setDragSource] = useState("side");
   const previewContainerRef = useRef(null);
+  const previewRefs = useRef([]);
+  const [draggingDocIndex, setDraggingDocIndex] = useState(0);
   const resizeRef = useRef(null);
 
   useEffect(() => {
@@ -53,7 +55,8 @@ function UserDashboard() {
     };
 
     const handlePointerUp = (event) => {
-      const previewRect = previewContainerRef.current?.getBoundingClientRect();
+      const previewEl = previewRefs.current[draggingDocIndex] || previewContainerRef.current;
+      const previewRect = previewEl?.getBoundingClientRect();
       const insidePreview =
         previewRect &&
         event.clientX >= previewRect.left &&
@@ -73,6 +76,8 @@ function UserDashboard() {
 
         setStatusPlacement({ x: nextX, y: nextY });
         setIsStatusPlacedOnPreview(true);
+        // keep a reference to the preview used
+        previewContainerRef.current = previewEl;
       } else if (dragSource === "preview") {
         setIsStatusPlacedOnPreview(true);
       } else {
@@ -162,10 +167,11 @@ function UserDashboard() {
     documents.some((doc) => doc.file) &&
     documents.some((doc) => doc.approvers.some((app) => app.email.trim()));
 
-  const handleDragStart = (event, source = "side") => {
+  const handleDragStart = (event, source = "side", documentIndex = 0) => {
     event.preventDefault();
     event.stopPropagation();
     setDragSource(source);
+    setDraggingDocIndex(documentIndex);
     setIsDragging(true);
     setDragGhostPosition({ x: event.clientX, y: event.clientY });
   };
@@ -173,6 +179,9 @@ function UserDashboard() {
   const handleResizeStart = (event) => {
     event.preventDefault();
     event.stopPropagation();
+
+    // stop any active drag while resizing
+    setIsDragging(false);
 
     const startX = event.clientX;
     const startY = event.clientY;
@@ -338,7 +347,7 @@ function UserDashboard() {
                       </Box>
                     </Box>
 
-                    <Box sx={{ mb: 3, position: "relative" }} ref={previewContainerRef}>
+                    <Box sx={{ mb: 3, position: "relative" }} ref={(el) => { previewRefs.current[documentIndex] = el; previewContainerRef.current = el; }}>
                       {document.previewUrl ? (
                         <>
                           {document.file?.type.startsWith("image/") ? (
@@ -380,7 +389,7 @@ function UserDashboard() {
                                 touchAction: "none",
                                 overflow: "hidden",
                               }}
-                              onPointerDown={(event) => handleDragStart(event, "preview")}
+                              onPointerDown={(event) => handleDragStart(event, "preview", documentIndex)}
                             >
                               <Typography variant="body2" sx={{ color: "#ef6c00", fontWeight: 700 }}>
                                 Status
