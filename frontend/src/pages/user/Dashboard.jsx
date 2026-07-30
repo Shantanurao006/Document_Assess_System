@@ -762,10 +762,7 @@ function UserDashboard() {
                     boxShadow: 1,
                     zIndex: 10,
                     pointerEvents: "none",
-                    display: "flex",
                     flexDirection: "column",
-                    alignItems: "flex-start",
-                    justifyContent: "flex-start",
                   }}
                 >
                   <Typography variant="body2" sx={{ color: "#ef6c00", fontWeight: 700 }}>

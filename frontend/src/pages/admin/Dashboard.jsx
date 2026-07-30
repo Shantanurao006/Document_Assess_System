@@ -381,52 +381,77 @@ const [signaturePreview, setSignaturePreview] = useState("");
     </Stack>
   )}
 
-  {selectedDocument && (
-    <Box
-      ref={previewWrapperRef}
-      sx={{ position: "relative", display: "inline-block", maxWidth: "100%" }}
-    >
-      {selectedDocument.stored_file_name
-        .toLowerCase()
-        .endsWith(".pdf") ? (
-          <Document
-            file={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={(error) => {
-              console.error("PDF Load Error:", error);
-            }}
-            loading={<Typography>Loading PDF...</Typography>}
-            error={<Typography color="error">Unable to load PDF.</Typography>}
-          >
-            {Array.from(new Array(numPages), (_, index) => (
-              <Page
-                key={`page_${index + 1}`}
-                pageNumber={index + 1}
-                width={700}
-              />
-            ))}
-          </Document>
-        ) : (
-          <img
-            src={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
-            alt={selectedDocument.original_file_name}
-            style={{
-              width: "100%",
-              maxHeight: "650px",
-              objectFit: "contain",
-            }}
+ {selectedDocument && (
+  <Box
+    ref={previewWrapperRef}
+    sx={{
+      position: "relative",
+      display: "inline-block",
+      maxWidth: "100%",
+    }}
+  >
+    {selectedDocument.stored_file_name
+      .toLowerCase()
+      .endsWith(".pdf") ? (
+      <Document
+        file={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
+        onLoadSuccess={onDocumentLoadSuccess}
+        onLoadError={(error) => {
+          console.error("PDF Load Error:", error);
+        }}
+        loading={<Typography>Loading PDF...</Typography>}
+        error={
+          <Typography color="error">
+            Unable to load PDF.
+          </Typography>
+        }
+      >
+        {Array.from(new Array(numPages), (_, index) => (
+          <Page
+            key={`page_${index + 1}`}
+            pageNumber={index + 1}
+            width={700}
           />
-        )}
+        ))}
+      </Document>
+    ) : (
+      <img
+        src={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
+        alt={selectedDocument.original_file_name}
+        style={{
+          width: "100%",
+          maxHeight: "650px",
+          objectFit: "contain",
+        }}
+      />
+    )}
 
-      {Array.isArray(selectedDocument.approval_box_config) &&
-        selectedDocument.approval_box_config.length > 0 &&
-        selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => {
+    {Array.isArray(selectedDocument.approval_box_config) &&
+      selectedDocument.approval_box_config.length > 0 &&
+      selectedDocument.approval_box_config.map(
+        (approvalBox, approvalBoxIndex) => {
           const previewWidth = previewDims.width || 700;
           const previewHeight = previewDims.height || 900;
-          const left = approvalBox.xRatio != null ? approvalBox.xRatio * previewWidth : approvalBox.x ?? 16;
-          const top = approvalBox.yRatio != null ? approvalBox.yRatio * previewHeight : approvalBox.y ?? 16;
-          const width = approvalBox.widthRatio != null ? approvalBox.widthRatio * previewWidth : approvalBox.width ?? 240;
-          const minHeight = approvalBox.heightRatio != null ? approvalBox.heightRatio * previewHeight : approvalBox.height ?? 156;
+
+          const left =
+            approvalBox.xRatio != null
+              ? approvalBox.xRatio * previewWidth
+              : approvalBox.x ?? 16;
+
+          const top =
+            approvalBox.yRatio != null
+              ? approvalBox.yRatio * previewHeight
+              : approvalBox.y ?? 16;
+
+          const width =
+            approvalBox.widthRatio != null
+              ? approvalBox.widthRatio * previewWidth
+              : approvalBox.width ?? 240;
+
+          const minHeight =
+            approvalBox.heightRatio != null
+              ? approvalBox.heightRatio * previewHeight
+              : approvalBox.height ?? 156;
 
           return (
             <Box
@@ -449,20 +474,31 @@ const [signaturePreview, setSignaturePreview] = useState("");
                 pointerEvents: "none",
               }}
             >
-          );
-        }))}
-            <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
-              Approval Box Preview
-            </Typography>
-            {(approvalBox.fields || DEFAULT_APPROVAL_BOX_FIELDS).map((fieldLabel) => (
-              <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
-                {fieldLabel}
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                sx={{ color: "#ef6c00" }}
+              >
+                Approval Box Preview
               </Typography>
-            ))}
-          </Box>
-        ))}
-    </Box>
-  )}
+
+              {(approvalBox.fields || DEFAULT_APPROVAL_BOX_FIELDS).map(
+                (fieldLabel) => (
+                  <Typography
+                    key={fieldLabel}
+                    variant="body2"
+                    sx={{ color: "#424242" }}
+                  >
+                    {fieldLabel}
+                  </Typography>
+                )
+              )}
+            </Box>
+          );
+        }
+      )}
+  </Box>
+)}
 
 <Box mt={4}>
 
