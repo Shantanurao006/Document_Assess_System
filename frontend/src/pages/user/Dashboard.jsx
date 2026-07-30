@@ -87,6 +87,12 @@ function UserDashboard() {
             copy[draggingDocIndex] = { ...copy[draggingDocIndex] };
             copy[draggingDocIndex].annotations = copy[draggingDocIndex].annotations || [];
             const annotation = copy[draggingDocIndex].annotations[draggingAnnotationIndex] || {};
+            const ratioConfig = {
+              xRatio: nextX / rect.width,
+              yRatio: nextY / rect.height,
+              widthRatio: statusSize.width / rect.width,
+              heightRatio: statusSize.height / rect.height,
+            };
             copy[draggingDocIndex].annotations[draggingAnnotationIndex] = {
               ...annotation,
               type: "status",
@@ -95,6 +101,7 @@ function UserDashboard() {
               width: statusSize.width,
               height: statusSize.height,
               fields: annotation.fields || APPROVAL_BOX_FIELDS,
+              ...ratioConfig,
             };
             return copy;
           });
@@ -119,7 +126,7 @@ function UserDashboard() {
       }
 
       if (targetIndex !== -1) {
-        const previewRect = previewRefs.current[targetIndex].getBoundingClientRect();
+        const previewRect = previewRefs.current[targetIndex]?.getBoundingClientRect();
         const nextX = Math.min(
           Math.max(event.clientX - previewRect.left - statusSize.width / 2, 12),
           Math.max(previewRect.width - statusSize.width - 12, 12)
@@ -133,6 +140,15 @@ function UserDashboard() {
         setIsStatusPlacedOnPreview(true);
         setDraggingDocIndex(targetIndex);
 
+        const ratioConfig = previewRect
+          ? {
+              xRatio: nextX / previewRect.width,
+              yRatio: nextY / previewRect.height,
+              widthRatio: statusSize.width / previewRect.width,
+              heightRatio: statusSize.height / previewRect.height,
+            }
+          : {};
+
         if (dragSource === "side") {
           const newAnnotation = {
             id: Date.now() + Math.random(),
@@ -142,6 +158,7 @@ function UserDashboard() {
             width: statusSize.width,
             height: statusSize.height,
             fields: APPROVAL_BOX_FIELDS,
+            ...ratioConfig,
           };
           setDocuments((prev) => {
             const copy = [...prev];
@@ -157,12 +174,14 @@ function UserDashboard() {
             const copy = [...prev];
             copy[targetIndex] = { ...copy[targetIndex] };
             copy[targetIndex].annotations = copy[targetIndex].annotations || [];
+            const existingAnnotation = copy[targetIndex].annotations[annotationIndex] || {};
             copy[targetIndex].annotations[annotationIndex] = {
-              ...copy[targetIndex].annotations[annotationIndex],
+              ...existingAnnotation,
               x: nextX,
               y: nextY,
-              width: copy[targetIndex].annotations[annotationIndex]?.width || statusSize.width,
-              height: copy[targetIndex].annotations[annotationIndex]?.height || statusSize.height,
+              width: existingAnnotation.width || statusSize.width,
+              height: existingAnnotation.height || statusSize.height,
+              ...ratioConfig,
             };
             return copy;
           });
@@ -298,6 +317,16 @@ function UserDashboard() {
     } catch (e) {
       // ignore
     }
+
+    const annotation = documents[documentIndex]?.annotations?.[annotationIndex];
+    const startWidth = annotation?.width ?? statusSize.width;
+    const startHeight = annotation?.height ?? statusSize.height;
+
+    if (annotation) {
+      setStatusSize({ width: annotation.width, height: annotation.height });
+      setStatusPlacement({ x: annotation.x, y: annotation.y });
+    }
+
     // stop any active drag while resizing
     setDragSource("preview");
     setDraggingDocIndex(documentIndex);
@@ -306,27 +335,38 @@ function UserDashboard() {
 
     const startX = event.clientX;
     const startY = event.clientY;
-    const startWidth = statusSize.width;
-    const startHeight = statusSize.height;
 
     const handleResizeMove = (moveEvent) => {
       const nextWidth = Math.max(130, startWidth + (moveEvent.clientX - startX));
       const nextHeight = Math.max(46, startHeight + (moveEvent.clientY - startY));
       setStatusSize({ width: nextWidth, height: nextHeight });
+
+      const previewEl = previewRefs.current[documentIndex];
+      const previewRect = previewEl?.getBoundingClientRect();
+      const ratioConfig = previewRect
+        ? {
+            xRatio: annotation?.x / previewRect.width,
+            yRatio: annotation?.y / previewRect.height,
+            widthRatio: nextWidth / previewRect.width,
+            heightRatio: nextHeight / previewRect.height,
+          }
+        : {};
+
       // update annotation size live
       setDocuments((prev) => {
         const copy = [...prev];
         copy[documentIndex] = { ...copy[documentIndex] };
         copy[documentIndex].annotations = copy[documentIndex].annotations || [];
-        const annotation = copy[documentIndex].annotations[annotationIndex] || {};
+        const currentAnnotation = copy[documentIndex].annotations[annotationIndex] || {};
         copy[documentIndex].annotations[annotationIndex] = {
-          ...annotation,
+          ...currentAnnotation,
           type: "status",
-          x: annotation.x ?? statusPlacement.x,
-          y: annotation.y ?? statusPlacement.y,
+          x: currentAnnotation.x ?? statusPlacement.x,
+          y: currentAnnotation.y ?? statusPlacement.y,
           width: nextWidth,
           height: nextHeight,
-          fields: annotation.fields || APPROVAL_BOX_FIELDS,
+          fields: currentAnnotation.fields || APPROVAL_BOX_FIELDS,
+          ...ratioConfig,
         };
         return copy;
       });

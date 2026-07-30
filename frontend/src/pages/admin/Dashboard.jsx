@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import API, { API_BASE_URL } from "../../api/api";
 import { clearUserSession, getStoredUser } from "../../auth/session";
 import {
@@ -67,6 +67,9 @@ function AdminDashboard() {
   const [openDialog, setOpenDialog] = useState(false);
 const [selectedDocument, setSelectedDocument] = useState(null);
 
+const previewWrapperRef = useRef(null);
+const [previewDims, setPreviewDims] = useState({ width: 700, height: 900 });
+
 const [numPages, setNumPages] = useState(0);
 
 const fetchDocuments = useCallback(async () => {
@@ -86,6 +89,24 @@ useEffect(() => {
   fetchDocuments();
 }, [fetchDocuments]);
 
+useEffect(() => {
+  const updatePreviewDims = () => {
+    const wrapper = previewWrapperRef.current;
+    if (wrapper) {
+      const rect = wrapper.getBoundingClientRect();
+      setPreviewDims({ width: rect.width, height: rect.height });
+    }
+  };
+
+  updatePreviewDims();
+
+  const wrapper = previewWrapperRef.current;
+  if (wrapper && typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(updatePreviewDims);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }
+}, [selectedDocument, openDialog]);
 
  const handleView = (document) => {
 
@@ -361,7 +382,10 @@ const [signaturePreview, setSignaturePreview] = useState("");
   )}
 
   {selectedDocument && (
-    <Box sx={{ position: "relative", display: "inline-block", maxWidth: "100%" }}>
+    <Box
+      ref={previewWrapperRef}
+      sx={{ position: "relative", display: "inline-block", maxWidth: "100%" }}
+    >
       {selectedDocument.stored_file_name
         .toLowerCase()
         .endsWith(".pdf") ? (
@@ -396,27 +420,37 @@ const [signaturePreview, setSignaturePreview] = useState("");
 
       {Array.isArray(selectedDocument.approval_box_config) &&
         selectedDocument.approval_box_config.length > 0 &&
-        selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => (
-          <Box
-            key={`${selectedDocument.id}-approval-box-${approvalBoxIndex}`}
-            sx={{
-              position: "absolute",
-              left: approvalBox.x ?? 16,
-              top: approvalBox.y ?? 16,
-              width: approvalBox.width ?? 240,
-              minHeight: approvalBox.height ?? 156,
-              display: "flex",
-              flexDirection: "column",
-              gap: 0.35,
-              px: 1.4,
-              py: 1,
-              borderRadius: 2,
-              bgcolor: "rgba(255,245,230,0.28)",
-              border: "2px dashed #ffb74d",
-              boxShadow: 1,
-              pointerEvents: "none",
-            }}
-          >
+        selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => {
+          const previewWidth = previewDims.width || 700;
+          const previewHeight = previewDims.height || 900;
+          const left = approvalBox.xRatio != null ? approvalBox.xRatio * previewWidth : approvalBox.x ?? 16;
+          const top = approvalBox.yRatio != null ? approvalBox.yRatio * previewHeight : approvalBox.y ?? 16;
+          const width = approvalBox.widthRatio != null ? approvalBox.widthRatio * previewWidth : approvalBox.width ?? 240;
+          const minHeight = approvalBox.heightRatio != null ? approvalBox.heightRatio * previewHeight : approvalBox.height ?? 156;
+
+          return (
+            <Box
+              key={`${selectedDocument.id}-approval-box-${approvalBoxIndex}`}
+              sx={{
+                position: "absolute",
+                left,
+                top,
+                width,
+                minHeight,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.35,
+                px: 1.4,
+                py: 1,
+                borderRadius: 2,
+                bgcolor: "rgba(255,245,230,0.28)",
+                border: "2px dashed #ffb74d",
+                boxShadow: 1,
+                pointerEvents: "none",
+              }}
+            >
+          );
+        }))}
             <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
               Approval Box Preview
             </Typography>
