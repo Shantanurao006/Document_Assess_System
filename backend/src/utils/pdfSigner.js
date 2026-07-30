@@ -25,6 +25,8 @@ const formatApprovalFieldValue = (fieldLabel, entry) => {
     }
 };
 
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
 const getLayoutMetrics = (approvalRows, boxWidth, boxHeight, orderedFields) => {
     const fieldCount = Math.max(orderedFields.length, 1);
     const rowContentHeight = Math.max(52, 18 + (fieldCount * 12));
@@ -68,17 +70,32 @@ const signPdf = async (
         });
 
     const pages = pdfDoc.getPages();
-    const page = pages[pages.length - 1];
+    const page = pages[0];
 
     const { width, height } = page.getSize();
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    const boxX = Math.max(12, Math.min(approvalBoxLayout.x, width - 140));
-    const boxTop = Math.max(24, Math.min(approvalBoxLayout.y, height - 24));
-    const boxWidth = Math.max(180, Math.min(approvalBoxLayout.width, width - boxX - 12));
-    const boxHeight = Math.max(120, Math.min(approvalBoxLayout.height, height - boxTop - 12));
-    const boxBottom = height - boxTop - boxHeight;
+    const boxX = clamp(
+        approvalBoxLayout.xRatio != null ? Math.round(approvalBoxLayout.xRatio * width) : approvalBoxLayout.x,
+        12,
+        Math.max(12, width - 180 - 12)
+    );
+
+    const boxWidth = clamp(
+        approvalBoxLayout.widthRatio != null ? Math.round(approvalBoxLayout.widthRatio * width) : approvalBoxLayout.width,
+        180,
+        Math.max(180, width - boxX - 12)
+    );
+
+    const boxHeight = clamp(
+        approvalBoxLayout.heightRatio != null ? Math.round(approvalBoxLayout.heightRatio * height) : approvalBoxLayout.height,
+        120,
+        Math.max(120, height - 12)
+    );
+
+    const boxYFromTop = approvalBoxLayout.yRatio != null ? Math.round(approvalBoxLayout.yRatio * height) : approvalBoxLayout.y;
+    const boxBottom = clamp(height - boxYFromTop - boxHeight, 12, Math.max(12, height - boxHeight - 12));
     const paddingX = 14;
     const paddingY = 12;
     const approvalRows = approvalEntries.length > 0 ? approvalEntries : [];

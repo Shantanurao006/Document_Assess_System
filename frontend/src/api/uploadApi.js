@@ -2,14 +2,15 @@ import API from "./api";
 
 export const uploadDocuments = async (
     documents,
-    uploadedBy
+    uploadedBy,
+    previewElements = []
 ) => {
 
     const formData = new FormData();
 
     formData.append("uploadedBy", uploadedBy);
 
-    documents.forEach((document) => {
+    documents.forEach((document, index) => {
 
         if (document.file) {
             formData.append(
@@ -21,16 +22,30 @@ export const uploadDocuments = async (
         const approverEmails = (document.approvers || []).map(
             (approver) => approver.email
         );
+        const previewElement = previewElements[index] || null;
+        const previewRect = previewElement ? previewElement.getBoundingClientRect() : null;
         const approvalBoxConfig = (document.annotations || [])
             .filter((annotation) => annotation.type === "status")
-            .map((annotation) => ({
-                type: annotation.type,
-                x: annotation.x,
-                y: annotation.y,
-                width: annotation.width,
-                height: annotation.height,
-                fields: annotation.fields || [],
-            }));
+            .map((annotation) => {
+                const ratioConfig = previewRect
+                    ? {
+                          xRatio: annotation.x / previewRect.width,
+                          yRatio: annotation.y / previewRect.height,
+                          widthRatio: annotation.width / previewRect.width,
+                          heightRatio: annotation.height / previewRect.height,
+                      }
+                    : {};
+
+                return {
+                    type: annotation.type,
+                    x: annotation.x,
+                    y: annotation.y,
+                    width: annotation.width,
+                    height: annotation.height,
+                    fields: annotation.fields || [],
+                    ...ratioConfig,
+                };
+            });
 
         formData.append(
             "approverEmails",

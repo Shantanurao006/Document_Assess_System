@@ -383,7 +383,7 @@ function UserDashboard() {
         }
       }
 
-      const response = await uploadDocuments(documents, user.email);
+      const response = await uploadDocuments(documents, user.email, previewRefs.current);
       alert(response.message);
 
       setDocuments([{ file: null, previewUrl: "", approvers: [{ email: "" }], annotations: [] }]);
