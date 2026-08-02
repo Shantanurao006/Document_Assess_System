@@ -52,6 +52,7 @@ function UserDashboard() {
   const [dragSource, setDragSource] = useState("side");
   const previewContainerRef = useRef(null);
   const previewRefs = useRef([]);
+  const [previewDims, setPreviewDims] = useState([]);
   const [draggingDocIndex, setDraggingDocIndex] = useState(0);
   const [draggingAnnotationIndex, setDraggingAnnotationIndex] = useState(null);
   const resizeRef = useRef(null);
@@ -204,6 +205,31 @@ function UserDashboard() {
       window.removeEventListener("pointerup", handlePointerUp);
     };
   }, [dragSource, isDragging, draggingAnnotationIndex, statusSize]);
+
+  useEffect(() => {
+    const updatePreviewDims = () => {
+      const dims = previewRefs.current.map((el) => {
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return rect ? { width: rect.width, height: rect.height } : null;
+      });
+      setPreviewDims(dims);
+    };
+
+    updatePreviewDims();
+
+    if (typeof ResizeObserver === "undefined") return undefined;
+
+    const observer = new ResizeObserver(() => {
+      updatePreviewDims();
+    });
+
+    previewRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [documents.length, documents.map((doc) => doc.previewUrl).join("|")] );
 
   const handleLogout = () => {
     clearUserSession();
@@ -561,58 +587,87 @@ function UserDashboard() {
                             />
                           )}
 
-                          {document.annotations?.map((annotation, annotationIndex) => (
-                            <Box
-                              key={annotation.id || annotationIndex}
-                              ref={annotationIndex === draggingAnnotationIndex ? resizeRef : null}
-                              sx={{
-                                position: "absolute",
-                                left: annotation.x,
-                                top: annotation.y,
-                                zIndex: 2,
-                                width: annotation.width,
-                                minHeight: annotation.height,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "center",
-                                gap: 0.35,
-                                px: 1.4,
-                                py: 1,
-                                borderRadius: 6,
-                                bgcolor: "rgba(255,245,230,0.35)",
-                                border: "3px dashed #ffb74d",
-                                boxShadow: 1,
-                                cursor: "move",
-                                userSelect: "none",
-                                touchAction: "none",
-                                overflow: "hidden",
-                              }}
-                              onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
-                            >
-                              <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
-                                Approval Box
-                              </Typography>
-                              {(annotation.fields || APPROVAL_BOX_FIELDS).map((fieldLabel) => (
-                                <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
-                                  {fieldLabel}
-                                </Typography>
-                              ))}
+                          {document.annotations?.map((annotation, annotationIndex) => {
+                            const dims = previewDims[documentIndex] || {};
+                            const width =
+                              annotation.widthRatio != null && dims.width
+                                ? annotation.widthRatio * dims.width
+                                : annotation.width || 240;
+                            const minHeight =
+                              annotation.heightRatio != null && dims.height
+                                ? annotation.heightRatio * dims.height
+                                : annotation.height || 156;
+                            const left =
+                              annotation.xRatio != null && dims.width
+                                ? annotation.xRatio * dims.width
+                                : annotation.x ?? 16;
+                            const top =
+                              annotation.yRatio != null && dims.height
+                                ? annotation.yRatio * dims.height
+                                : annotation.y ?? 16;
+                            const scale = Math.max(
+                              0.75,
+                              Math.min(1, Math.min(width / 240, minHeight / 156))
+                            );
+
+                            return (
                               <Box
+                                key={annotation.id || annotationIndex}
+                                ref={annotationIndex === draggingAnnotationIndex ? resizeRef : null}
                                 sx={{
                                   position: "absolute",
-                                  right: 6,
-                                  bottom: 6,
-                                  width: 14,
-                                  height: 14,
-                                  transform: "rotate(45deg)",
-                                  borderRight: "4px solid #ef6c00",
-                                  borderBottom: "4px solid #ef6c00",
-                                  cursor: "nwse-resize",
+                                  left,
+                                  top,
+                                  zIndex: 2,
+                                  width,
+                                  minHeight,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "center",
+                                  gap: 0.35,
+                                  px: 1.4,
+                                  py: 1,
+                                  borderRadius: 6,
+                                  bgcolor: "rgba(255,245,230,0.35)",
+                                  border: "3px dashed #ffb74d",
+                                  boxShadow: 1,
+                                  cursor: "move",
+                                  userSelect: "none",
+                                  touchAction: "none",
+                                  overflow: "hidden",
+                                  fontSize: `${scale}rem`,
+                                  lineHeight: 1.2,
+                                  "& .MuiTypography-root": {
+                                    fontSize: "inherit",
+                                  },
                                 }}
-                                onPointerDown={(event) => handleResizeStart(event, documentIndex, annotationIndex)}
-                              />
-                            </Box>
-                          ))}
+                                onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
+                              >
+                                <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
+                                  Approval Box
+                                </Typography>
+                                {(annotation.fields || APPROVAL_BOX_FIELDS).map((fieldLabel) => (
+                                  <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
+                                    {fieldLabel}
+                                  </Typography>
+                                ))}
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    right: 6,
+                                    bottom: 6,
+                                    width: 14,
+                                    height: 14,
+                                    transform: "rotate(45deg)",
+                                    borderRight: "4px solid #ef6c00",
+                                    borderBottom: "4px solid #ef6c00",
+                                    cursor: "nwse-resize",
+                                  }}
+                                  onPointerDown={(event) => handleResizeStart(event, documentIndex, annotationIndex)}
+                                />
+                              </Box>
+                            );
+                          })}
                         </>
                       ) : (
                         <Box

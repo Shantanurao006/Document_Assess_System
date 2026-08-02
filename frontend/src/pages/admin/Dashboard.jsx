@@ -95,22 +95,17 @@ function AdminDashboard() {
     const updatePreviewDims = () => {
       const wrapper = previewWrapperRef.current;
       const pageElement = wrapper?.querySelector(".react-pdf__Page");
+      const sourceElement = pageElement || wrapper;
 
-      if (pageElement) {
+      if (sourceElement && wrapper) {
         const wrapperRect = wrapper.getBoundingClientRect();
-        const rect = pageElement.getBoundingClientRect();
+        const rect = sourceElement.getBoundingClientRect();
         setPreviewDims({
           width: rect.width,
           height: rect.height,
           offsetLeft: rect.left - wrapperRect.left,
           offsetTop: rect.top - wrapperRect.top,
         });
-        return;
-      }
-
-      if (wrapper) {
-        const rect = wrapper.getBoundingClientRect();
-        setPreviewDims({ width: rect.width, height: rect.height, offsetLeft: 0, offsetTop: 0 });
       }
     };
 
@@ -123,6 +118,15 @@ function AdminDashboard() {
       return () => observer.disconnect();
     }
   }, [selectedDocument, openDialog, numPages]);
+
+  const getApprovalBoxScale = (approvalBox) => {
+    const previewWidth = previewDims.width || 700;
+    const previewHeight = previewDims.height || 900;
+    const width = approvalBox.widthRatio != null ? approvalBox.widthRatio * previewWidth : approvalBox.width || 240;
+    const height = approvalBox.heightRatio != null ? approvalBox.heightRatio * previewHeight : approvalBox.height || 156;
+    return Math.max(0.75, Math.min(1, Math.min(width / 240, height / 156)));
+
+  };
 
   const handleView = (document) => {
     setSelectedDocument(document);
@@ -365,7 +369,7 @@ function AdminDashboard() {
                     approvalBox.widthRatio != null
                       ? approvalBox.widthRatio * previewWidth
                       : approvalBox.width ?? 240;
-                  const minHeight =
+                  const height =
                     approvalBox.heightRatio != null
                       ? approvalBox.heightRatio * previewHeight
                       : approvalBox.height ?? 156;
@@ -378,7 +382,8 @@ function AdminDashboard() {
                         left,
                         top,
                         width,
-                        minHeight,
+                        height,
+                        boxSizing: "border-box",
                         display: "flex",
                         flexDirection: "column",
                         gap: 0.35,
@@ -389,6 +394,12 @@ function AdminDashboard() {
                         border: "2px dashed #ffb74d",
                         boxShadow: 1,
                         pointerEvents: "none",
+                        overflow: "hidden",
+                        fontSize: `${getApprovalBoxScale(approvalBox)}rem`,
+                        lineHeight: 1.2,
+                        "& .MuiTypography-root": {
+                          fontSize: "inherit",
+                        },
                       }}
                     >
                       <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
