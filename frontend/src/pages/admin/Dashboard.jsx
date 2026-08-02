@@ -91,26 +91,26 @@ function AdminDashboard() {
     void loadDocuments();
   }, [fetchDocuments]);
 
+  const updatePreviewDims = useCallback(() => {
+    const wrapper = previewWrapperRef.current;
+    const pageElement =
+      wrapper?.querySelector(".react-pdf__Page") ||
+      wrapper?.querySelector("canvas")?.closest(".react-pdf__Page");
+    const sourceElement = pageElement || wrapper;
+
+    if (sourceElement && wrapper) {
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const rect = sourceElement.getBoundingClientRect();
+      setPreviewDims({
+        width: rect.width,
+        height: rect.height,
+        offsetLeft: rect.left - wrapperRect.left,
+        offsetTop: rect.top - wrapperRect.top,
+      });
+    }
+  }, [selectedDocument]);
+
   useEffect(() => {
-    const updatePreviewDims = () => {
-      const wrapper = previewWrapperRef.current;
-      const pageElement =
-        wrapper?.querySelector(".react-pdf__Page") ||
-        wrapper?.querySelector("canvas")?.closest(".react-pdf__Page");
-      const sourceElement = pageElement || wrapper;
-
-      if (sourceElement && wrapper) {
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const rect = sourceElement.getBoundingClientRect();
-        setPreviewDims({
-          width: rect.width,
-          height: rect.height,
-          offsetLeft: rect.left - wrapperRect.left,
-          offsetTop: rect.top - wrapperRect.top,
-        });
-      }
-    };
-
     updatePreviewDims();
 
     const wrapper = previewWrapperRef.current;
@@ -119,7 +119,7 @@ function AdminDashboard() {
       observer.observe(wrapper);
       return () => observer.disconnect();
     }
-  }, [selectedDocument, openDialog, numPages]);
+  }, [selectedDocument, updatePreviewDims, openDialog, numPages]);
 
   const getApprovalBoxScale = (approvalBox) => {
     const previewWidth = previewDims.width || 700;
@@ -342,6 +342,7 @@ function AdminDashboard() {
                     <Page
                       key={`page_${index + 1}`}
                       pageNumber={index + 1}
+                      onRenderSuccess={updatePreviewDims}
                       width={Math.max(320, Math.min(previewDims.width || 700, 900))}
                     />
                   ))}
