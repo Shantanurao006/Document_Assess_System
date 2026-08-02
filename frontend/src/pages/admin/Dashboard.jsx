@@ -94,7 +94,9 @@ function AdminDashboard() {
   useEffect(() => {
     const updatePreviewDims = () => {
       const wrapper = previewWrapperRef.current;
-      const pageElement = wrapper?.querySelector(".react-pdf__Page");
+      const pageElement =
+        wrapper?.querySelector(".react-pdf__Page") ||
+        wrapper?.querySelector("canvas")?.closest(".react-pdf__Page");
       const sourceElement = pageElement || wrapper;
 
       if (sourceElement && wrapper) {
