@@ -602,8 +602,8 @@ function UserDashboard() {
                         mb: 3,
                         position: "relative",
                         overflow: "hidden",
-                        display: "inline-flex",
-                        width: "fit-content",
+                        display: "block",
+                        width: "100%",
                         maxWidth: "100%",
                       }}
                       ref={(el) => {
@@ -614,16 +614,16 @@ function UserDashboard() {
                       {document.previewUrl ? (
                         <>
                           {document.file?.type.startsWith("image/") ? (
-                            <Box sx={{ display: "inline-block", position: "relative", width: "fit-content", maxWidth: "100%" }}>
+                            <Box sx={{ display: "block", position: "relative", width: "100%", maxWidth: "100%" }}>
                               <img
                                 src={document.previewUrl}
                                 alt={document.file?.name || "Document preview"}
-                                style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12, display: "block" }}
+                                style={{ width: "100%", maxHeight: 900, objectFit: "contain", borderRadius: 12, display: "block" }}
                                 onLoad={handlePdfRenderSuccess}
                               />
                             </Box>
                           ) : (
-                            <Box sx={{ display: "inline-block", position: "relative", width: "fit-content", maxWidth: "100%" }}>
+                            <Box sx={{ display: "block", position: "relative", width: "100%", maxWidth: "100%" }}>
                               <Document
                                 file={document.previewUrl}
                                 onLoadSuccess={handlePdfRenderSuccess}
@@ -635,7 +635,7 @@ function UserDashboard() {
                               >
                                 <Page
                                   pageNumber={1}
-                                  width={Math.max(320, Math.min(previewDims[documentIndex]?.width || 700, 900))}
+                                  width={previewDims[documentIndex]?.width || 900}
                                   onRenderSuccess={handlePdfRenderSuccess}
                                 />
                               </Document>

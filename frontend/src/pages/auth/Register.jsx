@@ -33,18 +33,18 @@ function Register() {
       return;
     }
 
-    if (formData.pin.length !== 4) {
-      alert("PIN must be exactly 4 digits.");
+    if (formData.pin.length < 8) {
+      alert("Password must be at least 8 characters.");
       return;
     }
 
-    if (formData.confirmPin.length !== 4) {
-      alert("Confirm PIN must be exactly 4 digits.");
+    if (formData.confirmPin.length < 8) {
+      alert("Confirm Password must be at least 8 characters.");
       return;
     }
 
     if (formData.pin !== formData.confirmPin) {
-      alert("PIN and Confirm PIN do not match.");
+      alert("Password and Confirm Password do not match.");
       return;
     }
 
@@ -101,43 +101,42 @@ function Register() {
         <TextField
           fullWidth
           margin="normal"
-          label="User Name"
-          placeholder="example@example.com"
+          label="Email"
+          placeholder="example@gmail.com"
           name="email"
           value={formData.email}
           onChange={handleChange}
+          type="email"
         />
 
         <TextField
           fullWidth
           margin="normal"
-          label="PIN (4 Digit)"
+          label="Password"
           type="password"
-          placeholder="••••"
+          placeholder="Enter a secure password"
           name="pin"
           value={formData.pin}
           onChange={handleChange}
           inputProps={{
-            maxLength: 4,
-            inputMode: "numeric",
-            pattern: "[0-9]*",
+            maxLength: 64,
           }}
+          autoComplete="new-password"
         />
 
         <TextField
           fullWidth
           margin="normal"
-          label="Re-Enter PIN"
+          label="Confirm Password"
           type="password"
-          placeholder="••••"
+          placeholder="Re-enter password"
           name="confirmPin"
           value={formData.confirmPin}
           onChange={handleChange}
           inputProps={{
-            maxLength: 4,
-            inputMode: "numeric",
-            pattern: "[0-9]*",
+            maxLength: 64,
           }}
+          autoComplete="new-password"
         />
 
         <FormControlLabel

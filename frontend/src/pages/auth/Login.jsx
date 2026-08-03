@@ -36,12 +36,12 @@ function Login() {
     }
 
     if (!formData.pin.trim()) {
-      alert("Please enter PIN");
+      alert("Please enter Password");
       return;
     }
 
-    if (formData.pin.length !== 4) {
-      alert("PIN must be exactly 4 digits");
+    if (formData.pin.length < 8) {
+      alert("Password must be at least 8 characters");
       return;
     }
 
@@ -145,17 +145,14 @@ function Login() {
         <TextField
           fullWidth
           margin="normal"
-          label="PIN"
+          label="Password"
           name="pin"
           type="password"
-          placeholder="••••"
+          placeholder="Enter your password"
           value={formData.pin}
           onChange={handleChange}
-          inputProps={{
-            maxLength: 4,
-            inputMode: "numeric",
-          }}
           InputLabelProps={{ shrink: true }}
+          autoComplete="current-password"
         />
 
         <Button
