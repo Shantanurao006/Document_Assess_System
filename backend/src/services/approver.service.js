@@ -57,18 +57,22 @@ const validateApprover = async (email) => {
 
 const approveDocument = async (body, file) => {
 
-  const {
-    documentId,
-    status,
-    approvalDateTime,
-    approvedBy,
+    const {
+        documentId,
+        status,
+        approvalDateTime,
+        approvedBy,
+        savedSignatureFilename,
 } = body;
 
-if (!file) {
-    const error = new Error("Please upload your signature again.");
-    error.statusCode = 400;
-    throw error;
-}
+    // allow using an existing saved signature when no file is uploaded
+    if (!file) {
+        if (savedSignatureFilename) {
+            // use provided filename (from frontend)
+            file = { filename: savedSignatureFilename };
+        }
+        // else: we'll attempt to look up the admin's last signature after resolving admin
+    }
 
 console.log("===============");
 console.log("Approve Body:", body);
@@ -90,6 +94,13 @@ if (adminResult.rows.length === 0) {
 }
 
 const admin = adminResult.rows[0];
+    // If still no file, try to use the admin's last saved signature
+    if (!file) {
+        const lastSig = await getLastSignatureForAdmin(admin.id);
+        if (lastSig && lastSig.filename) {
+            file = { filename: lastSig.filename };
+        }
+    }
     // Get assignment details
     const result = await pool.query(
         `

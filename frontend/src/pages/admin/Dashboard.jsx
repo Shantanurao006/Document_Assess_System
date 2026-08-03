@@ -70,6 +70,7 @@ function AdminDashboard() {
   const [approvalDateTime, setApprovalDateTime] = useState(dayjs());
   const [signatureImage, setSignatureImage] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState("");
+  const [signatureFilename, setSignatureFilename] = useState("");
 
   const previewWrapperRef = useRef(null);
 
@@ -95,6 +96,7 @@ function AdminDashboard() {
         const res = await API.get(`/admin/signature/${user.id}`);
         if (res.data?.data?.url) {
           setSignaturePreview(res.data.data.url);
+          setSignatureFilename(res.data.data.filename || "");
         }
       } catch (err) {
         // ignore; no signature available
@@ -158,6 +160,7 @@ function AdminDashboard() {
     if (!file) return;
     setSignatureImage(file);
     setSignaturePreview(URL.createObjectURL(file));
+    setSignatureFilename("");
   };
 
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -176,8 +179,8 @@ function AdminDashboard() {
         return;
       }
 
-      if (!signatureImage) {
-        alert("Please upload your signature.");
+      if (!signatureImage && !signatureFilename) {
+        alert("Please upload your signature or use your saved signature.");
         return;
       }
 
@@ -186,7 +189,11 @@ function AdminDashboard() {
       formData.append("status", approvalStatus);
       formData.append("approvalDateTime", approvalDateTime.toISOString());
       formData.append("approvedBy", user.email);
-      formData.append("signature", signatureImage);
+      if (signatureImage) {
+        formData.append("signature", signatureImage);
+      } else if (signatureFilename) {
+        formData.append("savedSignatureFilename", signatureFilename);
+      }
 
       const response = await API.post("/admin/document/approve", formData, {
         headers: {
