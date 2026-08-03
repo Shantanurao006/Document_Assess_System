@@ -580,7 +580,7 @@ function UserDashboard() {
                       </Box>
                     </Box>
 
-                    <Box sx={{ mb: 3, position: "relative" }} ref={(el) => { previewRefs.current[documentIndex] = el; previewContainerRef.current = el; }}>
+                    <Box sx={{ mb: 3, position: "relative", overflow: "hidden" }} ref={(el) => { previewRefs.current[documentIndex] = el; previewContainerRef.current = el; }}>
                       {document.previewUrl ? (
                         <>
                           {document.file?.type.startsWith("image/") ? (
@@ -603,7 +603,7 @@ function UserDashboard() {
                               annotation.widthRatio != null && dims.width
                                 ? annotation.widthRatio * dims.width
                                 : annotation.width || 240;
-                            const minHeight =
+                            const height =
                               annotation.heightRatio != null && dims.height
                                 ? annotation.heightRatio * dims.height
                                 : annotation.height || 156;
@@ -630,7 +630,7 @@ function UserDashboard() {
                                   top,
                                   zIndex: 2,
                                   width,
-                                  minHeight,
+                                  height,
                                   display: "flex",
                                   flexDirection: "column",
                                   justifyContent: "center",
