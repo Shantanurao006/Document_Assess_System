@@ -65,7 +65,8 @@ const getLastSignature = async (req, res) => {
         }
 
         // expose a public URL to the signature file
-        const url = `${process.env.BASE_URL}/uploads/signatures/${result.filename}`;
+        const baseUrl = process.env.BASE_URL || "http://localhost:5000";
+        const url = `${baseUrl}/uploads/signatures/${result.filename}`;
         return res.status(200).json({ success: true, data: { filename: result.filename, url } });
     } catch (error) {
         console.error(error);
