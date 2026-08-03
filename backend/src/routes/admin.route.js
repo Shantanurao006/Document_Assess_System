@@ -22,6 +22,7 @@ router.get("/documents/:adminId", async (req, res) => {
                 da.id,
                 da.original_file_name,
                 da.stored_file_name,
+                da.signed_pdf_name,
                 da.approval_box_config,
                 da.assigned_datetime,
                 da.status,
@@ -57,25 +58,16 @@ router.get("/documents/:adminId", async (req, res) => {
         );
 
         const documents = result.rows.map((doc) => ({
-    ...doc,
-    file_url: `${process.env.BASE_URL}/uploads/${doc.stored_file_name}`,
-}));
+            ...doc,
+            file_url: doc.signed_pdf_name
+                ? `${process.env.BASE_URL}/uploads/signed/${doc.signed_pdf_name}`
+                : `${process.env.BASE_URL}/uploads/${doc.stored_file_name}`,
+        }));
 
-return res.status(200).json({
-    success: true,
-    data: documents,
-});
-
-// GET last uploaded signature for an admin
-router.get("/signature/:adminId", async (req, res) => {
-    try {
-        const { adminId } = req.params;
-        const controller = require("../controllers/approver.controller");
-        return await controller.getLastSignature(req, res);
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
-});
+        return res.status(200).json({
+            success: true,
+            data: documents,
+        });
 
     } catch (error) {
 
@@ -91,6 +83,9 @@ router.get("/signature/:adminId", async (req, res) => {
 /*
  * Approve / Reject Document
  */
+// GET last uploaded signature for an admin
+router.get("/signature/:adminId", approverController.getLastSignature);
+
 router.post(
     "/document/approve",
     upload.single("signature"),

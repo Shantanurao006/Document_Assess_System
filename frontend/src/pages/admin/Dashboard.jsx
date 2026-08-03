@@ -352,7 +352,11 @@ function AdminDashboard() {
             >
               {selectedDocument.stored_file_name.toLowerCase().endsWith(".pdf") ? (
                 <Document
-                  file={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
+                  file={
+                    selectedDocument.file_url
+                      ? selectedDocument.file_url
+                      : `${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`
+                  }
                   onLoadSuccess={onDocumentLoadSuccess}
                   onLoadError={(error) => {
                     console.error("PDF Load Error:", error);
@@ -371,7 +375,11 @@ function AdminDashboard() {
                 </Document>
               ) : (
                 <img
-                  src={`${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`}
+                  src={
+                    selectedDocument.file_url
+                      ? selectedDocument.file_url
+                      : `${API_BASE_URL}/uploads/${selectedDocument.stored_file_name}`
+                  }
                   alt={selectedDocument.original_file_name}
                   style={{ width: "100%", maxHeight: "650px", objectFit: "contain" }}
                 />
