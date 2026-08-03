@@ -599,25 +599,31 @@ function UserDashboard() {
 
                           {document.annotations?.map((annotation, annotationIndex) => {
                             const dims = previewDims[documentIndex] || {};
+                            const availableWidth = dims.width || 0;
+                            const availableHeight = dims.height || 0;
                             const width =
-                              annotation.widthRatio != null && dims.width
-                                ? annotation.widthRatio * dims.width
-                                : annotation.width || 240;
+                              annotation.widthRatio != null && availableWidth
+                                ? Math.min(annotation.widthRatio * availableWidth, availableWidth - 24)
+                                : Math.min(annotation.width || 240, Math.max(availableWidth - 24, 120));
                             const height =
-                              annotation.heightRatio != null && dims.height
-                                ? annotation.heightRatio * dims.height
-                                : annotation.height || 156;
-                            const left =
-                              annotation.xRatio != null && dims.width
-                                ? annotation.xRatio * dims.width
+                              annotation.heightRatio != null && availableHeight
+                                ? Math.min(annotation.heightRatio * availableHeight, availableHeight - 24)
+                                : Math.min(annotation.height || 156, Math.max(availableHeight - 24, 80));
+                            let left =
+                              annotation.xRatio != null && availableWidth
+                                ? annotation.xRatio * availableWidth
                                 : annotation.x ?? 16;
-                            const top =
-                              annotation.yRatio != null && dims.height
-                                ? annotation.yRatio * dims.height
+                            let top =
+                              annotation.yRatio != null && availableHeight
+                                ? annotation.yRatio * availableHeight
                                 : annotation.y ?? 16;
+                            const maxLeft = Math.max(availableWidth - width - 12, 12);
+                            const maxTop = Math.max(availableHeight - height - 12, 12);
+                            left = Math.min(Math.max(left, 12), maxLeft);
+                            top = Math.min(Math.max(top, 12), maxTop);
                             const scale = Math.max(
                               0.75,
-                              Math.min(1, Math.min(width / 240, minHeight / 156))
+                              Math.min(1, Math.min(width / 240, height / 156))
                             );
 
                             return (
