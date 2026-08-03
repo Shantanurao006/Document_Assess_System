@@ -89,6 +89,19 @@ function AdminDashboard() {
     };
 
     void loadDocuments();
+    // fetch last uploaded signature for this admin (if any)
+    const loadSignature = async () => {
+      try {
+        const res = await API.get(`/admin/signature/${user.id}`);
+        if (res.data?.data?.url) {
+          setSignaturePreview(res.data.data.url);
+        }
+      } catch (err) {
+        // ignore; no signature available
+      }
+    };
+
+    void loadSignature();
   }, [fetchDocuments]);
 
   const updatePreviewDims = useCallback(() => {
@@ -184,6 +197,15 @@ function AdminDashboard() {
       alert(response.data.message);
       handleCloseDialog();
       fetchDocuments();
+      // update displayed signature to the newly uploaded file
+      try {
+        const sigFilename = response.data?.data?.signature;
+        if (sigFilename) {
+          setSignaturePreview(`${API_BASE_URL}/uploads/signatures/${sigFilename}`);
+        }
+      } catch (err) {
+        // ignore
+      }
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.message || "Failed to approve document.");
@@ -439,23 +461,23 @@ function AdminDashboard() {
               />
             </LocalizationProvider>
 
-            <Box mt={3}>
-              <Button variant="contained" component="label">
-                Upload Signature
-                <input hidden type="file" accept="image/*" onChange={handleSignatureUpload} />
-              </Button>
-            </Box>
-
             {signaturePreview && (
-              <Box mt={2}>
-                <Typography fontWeight="bold">Signature Preview</Typography>
+              <Box mb={2}>
+                <Typography fontWeight="bold">Current Signature</Typography>
                 <img
                   src={signaturePreview}
                   alt="signature"
-                  style={{ width: 220, border: "1px solid #ddd", marginTop: 10 }}
+                  style={{ width: 220, border: "1px solid #ddd", marginTop: 10, display: "block" }}
                 />
               </Box>
             )}
+
+            <Box mt={signaturePreview ? 1 : 3}>
+              <Button variant="contained" component="label">
+                {signaturePreview ? "Replace Signature" : "Upload Signature"}
+                <input hidden type="file" accept="image/*" onChange={handleSignatureUpload} />
+              </Button>
+            </Box>
           </Box>
         </DialogContent>
 

@@ -56,7 +56,24 @@ const approveDocument = async (req, res) => {
     }
 
 };
+const getLastSignature = async (req, res) => {
+    try {
+        const { adminId } = req.params;
+        const result = await service.getLastSignatureForAdmin(adminId);
+        if (!result) {
+            return res.status(200).json({ success: true, data: null });
+        }
+
+        // expose a public URL to the signature file
+        const url = `${process.env.BASE_URL}/uploads/signatures/${result.filename}`;
+        return res.status(200).json({ success: true, data: { filename: result.filename, url } });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
 module.exports = {
     validateApprover,
     approveDocument,
+    getLastSignature,
 };

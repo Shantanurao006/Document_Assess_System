@@ -66,6 +66,17 @@ return res.status(200).json({
     data: documents,
 });
 
+// GET last uploaded signature for an admin
+router.get("/signature/:adminId", async (req, res) => {
+    try {
+        const { adminId } = req.params;
+        const controller = require("../controllers/approver.controller");
+        return await controller.getLastSignature(req, res);
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
     } catch (error) {
 
         return res.status(500).json({

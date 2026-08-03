@@ -280,7 +280,35 @@ const signedPdfPath = await signPdf(
     };
 };
 
+const getLastSignatureForAdmin = async (adminId) => {
+    const result = await pool.query(
+        `
+        SELECT signed_by_image
+        FROM document_assignments
+        WHERE approved_by = $1
+          AND signed_by_image IS NOT NULL
+        ORDER BY approved_datetime DESC
+        LIMIT 1
+        `,
+        [adminId]
+    );
+
+    if (result.rows.length === 0) return null;
+
+    const filename = result.rows[0].signed_by_image;
+    if (!filename) return null;
+
+    const fullPath = path.join(signaturesDir, filename);
+    if (!fs.existsSync(fullPath)) return null;
+
+    return {
+        filename,
+        path: fullPath,
+    };
+};
+
 module.exports = {
     validateApprover,
     approveDocument,
+    getLastSignatureForAdmin,
 };
