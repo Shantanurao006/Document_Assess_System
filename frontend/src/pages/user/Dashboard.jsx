@@ -76,12 +76,7 @@ function UserDashboard() {
             Math.max(event.clientX - rect.left - statusSize.width / 2, 12),
             Math.max(rect.width - statusSize.width - 12, 12)
           );
-          const bottomAnchorY = Math.max(rect.height - statusSize.height - 120, rect.height * 0.6, 12);
-          let nextY = Math.min(
-            Math.max(event.clientY - rect.top - statusSize.height / 2, 12),
-            Math.max(rect.height - statusSize.height - 12, 12)
-          );
-          if (nextY < bottomAnchorY) nextY = bottomAnchorY;
+          const nextY = Math.max(rect.height - statusSize.height - 12, 12);
 
           setStatusPlacement({ x: nextX, y: nextY });
           // update document annotation live
@@ -134,12 +129,8 @@ function UserDashboard() {
           Math.max(event.clientX - previewRect.left - statusSize.width / 2, 12),
           Math.max(previewRect.width - statusSize.width - 12, 12)
         );
-        const bottomAnchorY = Math.max(previewRect.height - statusSize.height - 120, previewRect.height * 0.6, 12);
-        let nextY = Math.min(
-          Math.max(event.clientY - previewRect.top - statusSize.height / 2, 12),
-          Math.max(previewRect.height - statusSize.height - 12, 12)
-        );
-        if (nextY < bottomAnchorY) nextY = bottomAnchorY;
+        const bottomAnchorY = Math.max(previewRect.height - statusSize.height - 12, 12);
+        const nextY = bottomAnchorY;
 
         setStatusPlacement({ x: nextX, y: nextY });
         setIsStatusPlacedOnPreview(true);
