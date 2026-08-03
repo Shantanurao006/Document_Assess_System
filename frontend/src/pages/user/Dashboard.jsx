@@ -841,6 +841,7 @@ function UserDashboard() {
                         </Box>
                       </Paper>
                     </Box>
+                  </Paper>
                 ))}
 
                 <Box>
