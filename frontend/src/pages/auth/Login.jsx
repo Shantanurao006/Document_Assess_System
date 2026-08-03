@@ -83,6 +83,7 @@ function Login() {
       justifyContent="center"
       alignItems="center"
       minHeight="100vh"
+      width="100%"
       position="relative"
       sx={{
         backgroundColor: "#ffffff",

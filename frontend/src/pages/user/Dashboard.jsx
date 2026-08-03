@@ -303,6 +303,21 @@ function UserDashboard() {
     setDocuments(updatedDocuments);
   };
 
+  const removeApprovalBox = (documentIndex, annotationIndex) => {
+    setDocuments((prev) => {
+      const copy = [...prev];
+      const doc = { ...copy[documentIndex] };
+      doc.annotations = (doc.annotations || []).filter((_, idx) => idx !== annotationIndex);
+      copy[documentIndex] = doc;
+      return copy;
+    });
+
+    if (draggingDocIndex === documentIndex && draggingAnnotationIndex === annotationIndex) {
+      setDraggingAnnotationIndex(null);
+      setIsDragging(false);
+    }
+  };
+
   const canSubmit =
     documents.every((doc) => !doc.file || hasApprovalBox(doc)) &&
     documents.some((doc) => doc.file) &&
@@ -647,6 +662,24 @@ function UserDashboard() {
                                 }}
                                 onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
                               >
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    right: 8,
+                                    top: 8,
+                                    zIndex: 3,
+                                  }}
+                                >
+                                  <RemoveCircleOutlineIcon
+                                    fontSize="small"
+                                    sx={{ color: "#d32f2f", cursor: "pointer" }}
+                                    onPointerDown={(event) => event.stopPropagation()}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      removeApprovalBox(documentIndex, annotationIndex);
+                                    }}
+                                  />
+                                </Box>
                                 <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
                                   Approval Box
                                 </Typography>
