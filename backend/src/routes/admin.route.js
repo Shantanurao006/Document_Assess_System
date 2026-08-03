@@ -1,5 +1,8 @@
 const express = require("express");
 const pool = require("../config/db");
+const fs = require("fs");
+const path = require("path");
+const { uploadsDir, signedDir } = require("../config/uploadPaths");
 
 const router = express.Router();
 
@@ -59,9 +62,19 @@ router.get("/documents/:adminId", async (req, res) => {
 
         const documents = result.rows.map((doc) => ({
             ...doc,
-            file_url: doc.signed_pdf_name
-                ? `${process.env.BASE_URL}/uploads/signed/${doc.signed_pdf_name}`
-                : `${process.env.BASE_URL}/uploads/${doc.stored_file_name}`,
+            file_url: (() => {
+                if (doc.signed_pdf_name) {
+                    const signedPath = path.join(signedDir, doc.signed_pdf_name);
+                    const altSignedPath = path.join(uploadsDir, doc.signed_pdf_name);
+                    if (fs.existsSync(signedPath)) {
+                        return `${process.env.BASE_URL}/uploads/signed/${doc.signed_pdf_name}`;
+                    }
+                    if (fs.existsSync(altSignedPath)) {
+                        return `${process.env.BASE_URL}/uploads/${doc.signed_pdf_name}`;
+                    }
+                }
+                return `${process.env.BASE_URL}/uploads/${doc.stored_file_name}`;
+            })(),
         }));
 
         return res.status(200).json({

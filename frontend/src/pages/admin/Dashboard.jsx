@@ -357,7 +357,7 @@ function AdminDashboard() {
               ref={previewWrapperRef}
               sx={{ position: "relative", display: "inline-block", width: "100%", maxWidth: "100%" }}
             >
-              {selectedDocument.stored_file_name.toLowerCase().endsWith(".pdf") ? (
+              {(selectedDocument.file_url || selectedDocument.stored_file_name || "").toLowerCase().endsWith(".pdf") ? (
                 <Document
                   file={
                     selectedDocument.file_url
