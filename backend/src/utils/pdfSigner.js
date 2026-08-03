@@ -125,19 +125,8 @@ const signPdf = async (
         y: boxBottom,
         width: boxWidth,
         height: boxHeight,
-        borderColor: rgb(0.94, 0.67, 0.15),
-        borderWidth: 1.5,
         color: rgb(1, 0.98, 0.94),
         opacity: 0.35,
-        borderOpacity: 1,
-    });
-
-    page.drawText("Approval Box", {
-        x: contentLeft,
-        y: contentTop,
-        size: headingSize,
-        font,
-        color: rgb(0.91, 0.43, 0),
     });
 
     for (let entryIndex = 0; entryIndex < approvalRows.length; entryIndex++) {

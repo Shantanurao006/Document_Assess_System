@@ -405,9 +405,6 @@ function AdminDashboard() {
                         },
                       }}
                     >
-                      <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
-                        Approval Box Preview
-                      </Typography>
                       {(approvalBox.fields || DEFAULT_APPROVAL_BOX_FIELDS).map((fieldLabel) => (
                         <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
                           {fieldLabel}
