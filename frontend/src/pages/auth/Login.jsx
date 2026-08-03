@@ -83,27 +83,50 @@ function Login() {
       justifyContent="center"
       alignItems="center"
       minHeight="100vh"
+      position="relative"
       sx={{
-        backgroundColor: "linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%)",
+        backgroundColor: "#ffffff",
         p: 2,
       }}
     >
-      <Paper
-        elevation={5}
+      <Box
+        position="absolute"
+        inset={0}
         sx={{
-          width: { xs: "100%", sm: 480 },
-          maxWidth: 600,
-          p: { xs: 3, sm: 6 },
-          borderRadius: 3,
+          background: 'radial-gradient(circle at top left, rgba(14,165,233,0.12), transparent 25%), radial-gradient(circle at bottom right, rgba(59,130,246,0.12), transparent 20%)',
+          opacity: 1,
+          zIndex: 0,
+        }}
+      />
+
+      <Paper
+        elevation={8}
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          width: { xs: "100%", sm: 460 },
+          maxWidth: 520,
+          p: { xs: 4, sm: 6 },
+          borderRadius: 4,
+          boxShadow: "0 28px 80px rgba(15, 23, 42, 0.12)",
+          backgroundColor: "#ffffff",
         }}
       >
         <Typography
           variant="h4"
           textAlign="center"
-          fontWeight="bold"
-          mb={4}
+          fontWeight="700"
+          mb={1}
         >
           Login
+        </Typography>
+        <Typography
+          variant="body2"
+          textAlign="center"
+          color="text.secondary"
+          mb={4}
+        >
+          Secure access to the document approval system.
         </Typography>
 
         <TextField
@@ -111,9 +134,11 @@ function Login() {
           margin="normal"
           label="Email"
           name="email"
+          type="email"
           placeholder="example@gmail.com"
           value={formData.email}
           onChange={handleChange}
+          InputLabelProps={{ shrink: true }}
         />
 
         <TextField
@@ -129,12 +154,13 @@ function Login() {
             maxLength: 4,
             inputMode: "numeric",
           }}
+          InputLabelProps={{ shrink: true }}
         />
 
         <Button
           variant="contained"
           fullWidth
-          sx={{ mt: 3 }}
+          sx={{ mt: 3, py: 1.6, fontWeight: 600 }}
           onClick={handleLogin}
         >
           Login
