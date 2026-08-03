@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -12,13 +12,13 @@ import {
 } from "@mui/material";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
-import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutlined";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+
+import { Document, Page, pdfjs } from "react-pdf";
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 import { uploadDocuments } from "../../api/uploadApi";
 import { validateApprover } from "../../api/approverApi";
@@ -30,6 +30,8 @@ const APPROVAL_BOX_FIELDS = [
   "Approved On",
   "Status",
 ];
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 function UserDashboard() {
   const navigate = useNavigate();
@@ -46,7 +48,6 @@ function UserDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragGhostPosition, setDragGhostPosition] = useState({ x: 0, y: 0 });
-  const [isStatusPlacedOnPreview, setIsStatusPlacedOnPreview] = useState(false);
   const [statusPlacement, setStatusPlacement] = useState({ x: 16, y: 16 });
   const [statusSize, setStatusSize] = useState({ width: 240, height: 156 });
   const [dragSource, setDragSource] = useState("side");
@@ -55,8 +56,29 @@ function UserDashboard() {
   const [previewDims, setPreviewDims] = useState([]);
   const [draggingDocIndex, setDraggingDocIndex] = useState(0);
   const [draggingAnnotationIndex, setDraggingAnnotationIndex] = useState(null);
+  const previewUrls = documents.map((doc) => doc.previewUrl).join("|");
   const resizeRef = useRef(null);
   const hasPreview = documents.some((d) => !!d.previewUrl);
+
+  const getPreviewPageElement = useCallback((container) => {
+    if (!container) return null;
+    return (
+      container.querySelector(".react-pdf__Page") ||
+      container.querySelector("img") ||
+      container.querySelector("canvas")?.closest(".react-pdf__Page") ||
+      container
+    );
+  }, []);
+
+  const updatePreviewDims = useCallback(() => {
+    const dims = previewRefs.current.map((container) => {
+      const pageElement = getPreviewPageElement(container);
+      if (!pageElement) return null;
+      const rect = pageElement.getBoundingClientRect();
+      return rect ? { width: rect.width, height: rect.height } : null;
+    });
+    setPreviewDims(dims);
+  }, [getPreviewPageElement]);
 
   const hasApprovalBox = (document) =>
     (document.annotations || []).some(
@@ -69,7 +91,7 @@ function UserDashboard() {
     const handlePointerMove = (event) => {
       // when dragging an already-placed status, move it live
       if (dragSource === "preview") {
-        const previewEl = previewRefs.current[draggingDocIndex] || previewContainerRef.current;
+        const previewEl = getPreviewPageElement(previewRefs.current[draggingDocIndex]) || previewContainerRef.current;
         const rect = previewEl?.getBoundingClientRect();
         if (rect && draggingAnnotationIndex != null) {
           const nextX = Math.min(
@@ -124,7 +146,12 @@ function UserDashboard() {
       }
 
       if (targetIndex !== -1) {
-        const previewRect = previewRefs.current[targetIndex]?.getBoundingClientRect();
+        const pageElement = getPreviewPageElement(previewRefs.current[targetIndex]);
+        const previewRect = pageElement?.getBoundingClientRect();
+        if (!previewRect) {
+          setIsDragging(false);
+          return;
+        }
         const nextX = Math.min(
           Math.max(event.clientX - previewRect.left - statusSize.width / 2, 12),
           Math.max(previewRect.width - statusSize.width - 12, 12)
@@ -133,7 +160,6 @@ function UserDashboard() {
         const nextY = bottomAnchorY;
 
         setStatusPlacement({ x: nextX, y: nextY });
-        setIsStatusPlacedOnPreview(true);
         setDraggingDocIndex(targetIndex);
 
         const ratioConfig = previewRect
@@ -182,11 +208,6 @@ function UserDashboard() {
             return copy;
           });
         }
-      } else if (dragSource === "preview") {
-        // keep it placed where it was
-        setIsStatusPlacedOnPreview(true);
-      } else {
-        setIsStatusPlacedOnPreview(false);
       }
 
       setIsDragging(false);
@@ -199,18 +220,9 @@ function UserDashboard() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [dragSource, isDragging, draggingAnnotationIndex, statusSize]);
+  }, [dragSource, isDragging, draggingAnnotationIndex, statusSize, draggingDocIndex, getPreviewPageElement]);
 
   useEffect(() => {
-    const updatePreviewDims = () => {
-      const dims = previewRefs.current.map((el) => {
-        if (!el) return null;
-        const rect = el.getBoundingClientRect();
-        return rect ? { width: rect.width, height: rect.height } : null;
-      });
-      setPreviewDims(dims);
-    };
-
     updatePreviewDims();
 
     if (typeof ResizeObserver === "undefined") return undefined;
@@ -220,15 +232,20 @@ function UserDashboard() {
     });
 
     previewRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
+      const pageElement = getPreviewPageElement(el) || el;
+      if (pageElement) observer.observe(pageElement);
     });
 
     return () => observer.disconnect();
-  }, [documents.length, documents.map((doc) => doc.previewUrl).join("|")] );
+  }, [documents.length, previewUrls, getPreviewPageElement, updatePreviewDims]);
 
   const handleLogout = () => {
     clearUserSession();
     navigate("/");
+  };
+
+  const handlePdfRenderSuccess = () => {
+    updatePreviewDims();
   };
 
   const handleFileChange = (index, event) => {
@@ -321,10 +338,10 @@ function UserDashboard() {
     if (source === "side" && !documents.some((d) => !!d.previewUrl)) return;
     try {
       // capture the pointer so pointermove/up continue even when over an iframe
-      if (event.pointerId && event.currentTarget && event.currentTarget.setPointerCapture) {
+      if (event.pointerId && event.currentTarget?.setPointerCapture) {
         event.currentTarget.setPointerCapture(event.pointerId);
       }
-    } catch (e) {
+    } catch {
       // ignore capture errors
     }
     if (source === "preview" && annotationIndex != null) {
@@ -347,10 +364,10 @@ function UserDashboard() {
 
     try {
       // capture the pointer so resizing continues if pointer moves over iframe
-      if (event.pointerId && event.currentTarget && event.currentTarget.setPointerCapture) {
+      if (event.pointerId && event.currentTarget?.setPointerCapture) {
         event.currentTarget.setPointerCapture(event.pointerId);
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -580,21 +597,49 @@ function UserDashboard() {
                       </Box>
                     </Box>
 
-                    <Box sx={{ mb: 3, position: "relative", overflow: "hidden" }} ref={(el) => { previewRefs.current[documentIndex] = el; previewContainerRef.current = el; }}>
+                    <Box
+                      sx={{
+                        mb: 3,
+                        position: "relative",
+                        overflow: "hidden",
+                        display: "inline-flex",
+                        width: "fit-content",
+                        maxWidth: "100%",
+                      }}
+                      ref={(el) => {
+                        previewRefs.current[documentIndex] = el;
+                        previewContainerRef.current = el;
+                      }}
+                    >
                       {document.previewUrl ? (
                         <>
                           {document.file?.type.startsWith("image/") ? (
-                            <img
-                              src={document.previewUrl}
-                              alt={document.file?.name || "Document preview"}
-                              style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12 }}
-                            />
+                            <Box sx={{ display: "inline-block", position: "relative", width: "fit-content", maxWidth: "100%" }}>
+                              <img
+                                src={document.previewUrl}
+                                alt={document.file?.name || "Document preview"}
+                                style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12, display: "block" }}
+                                onLoad={handlePdfRenderSuccess}
+                              />
+                            </Box>
                           ) : (
-                            <iframe
-                              title={document.file?.name || "Document preview"}
-                              src={document.previewUrl}
-                              style={{ width: "100%", height: 360, border: "none", borderRadius: 12 }}
-                            />
+                            <Box sx={{ display: "inline-block", position: "relative", width: "fit-content", maxWidth: "100%" }}>
+                              <Document
+                                file={document.previewUrl}
+                                onLoadSuccess={handlePdfRenderSuccess}
+                                onLoadError={(error) => {
+                                  console.error("PDF Load Error:", error);
+                                }}
+                                loading={<Typography>Loading PDF...</Typography>}
+                                error={<Typography color="error">Unable to load PDF.</Typography>}
+                              >
+                                <Page
+                                  pageNumber={1}
+                                  width={Math.max(320, Math.min(previewDims[documentIndex]?.width || 700, 900))}
+                                  onRenderSuccess={handlePdfRenderSuccess}
+                                />
+                              </Document>
+                            </Box>
                           )}
 
                           {document.annotations?.map((annotation, annotationIndex) => {

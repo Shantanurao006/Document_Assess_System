@@ -108,7 +108,7 @@ function AdminDashboard() {
         offsetTop: rect.top - wrapperRect.top,
       });
     }
-  }, [selectedDocument]);
+  }, []);
 
   useEffect(() => {
     updatePreviewDims();
