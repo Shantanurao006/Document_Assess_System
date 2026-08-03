@@ -544,8 +544,8 @@ function UserDashboard() {
             Upload Documents
           </Typography>
 
-          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "flex-start" }}>
-            <Box sx={{ flex: 2, minWidth: { xs: "100%", lg: 0 } }}>
+          <Box sx={{ display: "flex", gap: 3, flexWrap: { xs: "wrap", lg: "nowrap" }, alignItems: "flex-start" }}>
+            <Box sx={{ flex: 4, minWidth: { xs: "100%", lg: 0 }, maxWidth: { lg: "calc(100% - 260px)" } }}>
               <Stack spacing={3}>
                 {documents.map((document, documentIndex) => (
                   <Paper key={documentIndex} elevation={3} sx={{ p: 3, borderRadius: 3 }}>
@@ -843,7 +843,7 @@ function UserDashboard() {
               </Stack>
             </Box>
 
-            <Box sx={{ width: { xs: "100%", lg: 340 }, minHeight: 320, position: "relative" }}>
+            <Box sx={{ width: { xs: "100%", lg: 260 }, minHeight: 320, position: "relative" }}>
               
                 <Paper elevation={4} sx={{ p: 2.5, borderRadius: 3, bgcolor: "#fcfdff", border: "1px solid #dce6f3" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
