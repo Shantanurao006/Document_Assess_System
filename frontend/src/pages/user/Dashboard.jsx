@@ -516,9 +516,9 @@ function UserDashboard() {
             variant="contained"
             color="secondary"
             sx={{ mr: 2 }}
-            onClick={() => navigate(user?.role === "ADMIN" ? "/admin/my-documents" : "/user/my-documents")}
+            onClick={() => navigate(user?.role === "ADMIN" ? "/admin/dashboard" : "/user/my-documents")}
           >
-            My Documents
+            {user?.role === "ADMIN" ? "Admin Dashboard" : "My Documents"}
           </Button>
           <Button
             variant="outlined"

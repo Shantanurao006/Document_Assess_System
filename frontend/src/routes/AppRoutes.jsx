@@ -64,7 +64,7 @@ function AppRoutes() {
           path="/admin/my-documents"
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <MyDocuments />
+              <Navigate to="/admin/dashboard" replace />
             </ProtectedRoute>
           }
         />
