@@ -357,32 +357,38 @@ function AdminDashboard() {
               ref={previewWrapperRef}
               sx={{ position: "relative", display: "inline-block", width: "100%", maxWidth: "100%" }}
             >
-              {(selectedDocument.file_url || selectedDocument.stored_file_name || "").toLowerCase().endsWith(".pdf") ? (
-                <Document
-                  file={selectedDocument.file_url || `/uploads/${selectedDocument.stored_file_name}`}
-                  onLoadSuccess={onDocumentLoadSuccess}
-                  onLoadError={(error) => {
-                    console.error("PDF Load Error:", error);
-                  }}
-                  loading={<Typography>Loading PDF...</Typography>}
-                  error={<Typography color="error">Unable to load PDF.</Typography>}
-                >
-                  {Array.from(new Array(numPages), (_, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      onRenderSuccess={updatePreviewDims}
-                      width={Math.max(320, Math.min(previewDims.width || 700, 900))}
-                    />
-                  ))}
-                </Document>
-              ) : (
-                <img
-                  src={selectedDocument.file_url || `/uploads/${selectedDocument.stored_file_name}`}
-                  alt={selectedDocument.original_file_name}
-                  style={{ width: "100%", maxHeight: "650px", objectFit: "contain" }}
-                />
-              )}
+              {(() => {
+                const candidateUrl = selectedDocument.file_url || `/uploads/${selectedDocument.stored_file_name}`;
+                const resolvedUrl = candidateUrl.startsWith("http")
+                  ? candidateUrl
+                  : `${API_BASE_URL}${candidateUrl.startsWith("/") ? "" : "/"}${candidateUrl}`;
+                return (resolvedUrl || "").toLowerCase().endsWith(".pdf") ? (
+                  <Document
+                    file={resolvedUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={(error) => {
+                      console.error("PDF Load Error:", error);
+                    }}
+                    loading={<Typography>Loading PDF...</Typography>}
+                    error={<Typography color="error">Unable to load PDF.</Typography>}
+                  >
+                    {Array.from(new Array(numPages), (_, index) => (
+                      <Page
+                        key={`page_${index + 1}`}
+                        pageNumber={index + 1}
+                        onRenderSuccess={updatePreviewDims}
+                        width={Math.max(320, Math.min(previewDims.width || 700, 900))}
+                      />
+                    ))}
+                  </Document>
+                ) : (
+                  <img
+                    src={resolvedUrl}
+                    alt={selectedDocument.original_file_name}
+                    style={{ width: "100%", maxHeight: "650px", objectFit: "contain" }}
+                  />
+                );
+              })()}
 
               {Array.isArray(selectedDocument.approval_box_config) &&
                 selectedDocument.approval_box_config.length > 0 &&
