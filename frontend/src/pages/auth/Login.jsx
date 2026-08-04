@@ -19,11 +19,26 @@ function Login() {
     email: "",
     pin: "",
   });
+  const [changeMode, setChangeMode] = useState(false);
+  const [changeData, setChangeData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleChangeData = (e) => {
+    const { name, value } = e.target;
+
+    setChangeData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -40,16 +55,11 @@ function Login() {
       return;
     }
 
-    if (formData.pin.length < 8) {
-      alert("Password must be at least 8 characters");
-      return;
-    }
-
     try {
       const response = await API.post("/auth/login", {
-  email: formData.email,
-  pin: formData.pin,
-});
+        email: formData.email,
+        pin: formData.pin,
+      });
 
       const user = response.data.data;
 
@@ -74,6 +84,58 @@ function Login() {
         ...prev,
         pin: "",
       }));
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!formData.email.trim()) {
+      alert("Please enter Email");
+      return;
+    }
+
+    if (!changeData.currentPassword.trim()) {
+      alert("Please enter current password");
+      return;
+    }
+
+    if (!changeData.newPassword.trim()) {
+      alert("Please enter new password");
+      return;
+    }
+
+    if (changeData.newPassword.length < 8) {
+      alert("New password must be at least 8 characters");
+      return;
+    }
+
+    if (changeData.newPassword !== changeData.confirmNewPassword) {
+      alert("New password and confirm password do not match");
+      return;
+    }
+
+    try {
+      await API.post("/auth/change-password", {
+        email: formData.email,
+        currentPassword: changeData.currentPassword,
+        newPassword: changeData.newPassword,
+      });
+
+      alert("Password changed successfully. Please login with your new password.");
+      setChangeMode(false);
+      setChangeData({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+      setFormData((prev) => ({
+        ...prev,
+        pin: "",
+      }));
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Password change failed"
+      );
     }
   };
 
@@ -163,6 +225,59 @@ function Login() {
         >
           Login
         </Button>
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+          <Typography variant="body2">Need to change password?</Typography>
+          <Button variant="text" onClick={() => setChangeMode((prev) => !prev)}>
+            {changeMode ? "Cancel" : "Change Password"}
+          </Button>
+        </Box>
+
+        {changeMode && (
+          <Box sx={{ mt: 3 }}>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Current Password"
+              name="currentPassword"
+              type="password"
+              placeholder="Enter current password"
+              value={changeData.currentPassword}
+              onChange={handleChangeData}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="New Password"
+              name="newPassword"
+              type="password"
+              placeholder="Enter new password"
+              value={changeData.newPassword}
+              onChange={handleChangeData}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Confirm New Password"
+              name="confirmNewPassword"
+              type="password"
+              placeholder="Confirm new password"
+              value={changeData.confirmNewPassword}
+              onChange={handleChangeData}
+              InputLabelProps={{ shrink: true }}
+            />
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ mt: 2, py: 1.6, fontWeight: 600 }}
+              onClick={handleChangePassword}
+            >
+              Update Password
+            </Button>
+          </Box>
+        )}
       </Paper>
     </Box>
   );

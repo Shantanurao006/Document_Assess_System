@@ -55,7 +55,27 @@ const login = async (req, res) => {
 
 };
 
+const changePassword = async (req, res) => {
+    try {
+        const { email, currentPassword, newPassword } = req.body;
+
+        const user = await service.changePassword(email, currentPassword, newPassword);
+
+        res.status(200).json({
+            success: true,
+            message: "Password changed successfully",
+            data: { id: user.id, email: user.email, role: user.role }
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     register,
-    login
+    login,
+    changePassword
 };

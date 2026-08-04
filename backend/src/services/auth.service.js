@@ -25,13 +25,13 @@ const login = async (email, pin) => {
     const user = await repository.findUserByEmail(email);
 
     if (!user) {
-        throw new Error("Invalid Email or PIN");
+        throw new Error("Invalid Email or Password");
     }
 
     const isPinValid = await bcrypt.compare(pin, user.pin);
 
     if (!isPinValid) {
-        throw new Error("Invalid Email or PIN");
+        throw new Error("Invalid Email or Password");
     }
 
     return {
@@ -41,7 +41,29 @@ const login = async (email, pin) => {
     };
 };
 
+const changePassword = async (email, currentPassword, newPassword) => {
+    const user = await repository.findUserByEmail(email);
+
+    if (!user) {
+        throw new Error("Invalid Email or current password.");
+    }
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.pin);
+
+    if (!isCurrentValid) {
+        throw new Error("Current password is incorrect.");
+    }
+
+    if (newPassword.length < 8) {
+        throw new Error("New password must be at least 8 characters long.");
+    }
+
+    const hashedPin = await bcrypt.hash(newPassword, 10);
+    return await repository.updateUserPin(user.id, hashedPin);
+};
+
 module.exports = {
     register,
-    login
+    login,
+    changePassword,
 };

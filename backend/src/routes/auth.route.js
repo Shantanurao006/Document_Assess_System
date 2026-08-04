@@ -4,8 +4,7 @@ const router = express.Router();
 const controller = require("../controllers/auth.controller");
 
 router.post("/register", controller.register);
-
-// NEW
 router.post("/login", controller.login);
+router.post("/change-password", controller.changePassword);
 
 module.exports = router;
