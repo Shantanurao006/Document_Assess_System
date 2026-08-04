@@ -19,6 +19,11 @@ services:
     rootDir: frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
+    envVars:
+      # This value is embedded into the Vite build, so it must be the public
+      # URL of the backend service (not the Render dashboard URL).
+      - key: VITE_API_BASE_URL
+        value: https://document-assess-system.onrender.com
     routes:
       - type: rewrite
         source: /*
