@@ -60,6 +60,7 @@ router.get("/documents/:adminId", async (req, res) => {
             [adminId]
         );
 
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
         const documents = result.rows.map((doc) => ({
             ...doc,
             file_url: (() => {
@@ -67,13 +68,13 @@ router.get("/documents/:adminId", async (req, res) => {
                     const signedPath = path.join(signedDir, doc.signed_pdf_name);
                     const altSignedPath = path.join(uploadsDir, doc.signed_pdf_name);
                     if (fs.existsSync(signedPath)) {
-                        return `/uploads/signed/${doc.signed_pdf_name}`;
+                        return `${baseUrl}/uploads/signed/${doc.signed_pdf_name}`;
                     }
                     if (fs.existsSync(altSignedPath)) {
-                        return `/uploads/${doc.signed_pdf_name}`;
+                        return `${baseUrl}/uploads/${doc.signed_pdf_name}`;
                     }
                 }
-                return `/uploads/${doc.stored_file_name}`;
+                return `${baseUrl}/uploads/${doc.stored_file_name}`;
             })(),
         }));
 
