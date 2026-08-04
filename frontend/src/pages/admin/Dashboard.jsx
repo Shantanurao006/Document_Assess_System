@@ -241,7 +241,7 @@ function AdminDashboard() {
             variant="contained"
             color="secondary"
             sx={{ mr: 2 }}
-            onClick={() => navigate("/user/dashboard")}
+            onClick={() => navigate("/admin/upload")}
           >
             Upload Documents
           </Button>

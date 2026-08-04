@@ -516,7 +516,7 @@ function UserDashboard() {
             variant="contained"
             color="secondary"
             sx={{ mr: 2 }}
-            onClick={() => navigate("/user/my-documents")}
+            onClick={() => navigate(user?.role === "ADMIN" ? "/admin/my-documents" : "/user/my-documents")}
           >
             My Documents
           </Button>
@@ -533,7 +533,7 @@ function UserDashboard() {
 
       <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: "auto" }}>
         <Typography variant="h4" fontWeight="bold">
-          User Dashboard
+          {user?.role === "ADMIN" ? "Admin Dashboard" : "User Dashboard"}
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 4, maxWidth: 780 }}>
           Upload one or more documents for approval. Place the approval box on the document, then add approver emails and submit.
