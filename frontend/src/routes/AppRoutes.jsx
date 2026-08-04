@@ -36,7 +36,7 @@ function AppRoutes() {
         <Route
     path="/user/dashboard"
     element={
-      <ProtectedRoute allowedRoles={["USER"]}>
+      <ProtectedRoute allowedRoles={["USER", "ADMIN"]}>
         <UserDashboard />
       </ProtectedRoute>
     }
@@ -45,7 +45,7 @@ function AppRoutes() {
 <Route
     path="/user/my-documents"
     element={
-      <ProtectedRoute allowedRoles={["USER"]}>
+      <ProtectedRoute allowedRoles={["USER", "ADMIN"]}>
         <MyDocuments />
       </ProtectedRoute>
     }

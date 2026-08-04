@@ -238,6 +238,14 @@ function AdminDashboard() {
             </Button>
           )}
           <Button
+            variant="contained"
+            color="secondary"
+            sx={{ mr: 2 }}
+            onClick={() => navigate("/user/dashboard")}
+          >
+            Upload Documents
+          </Button>
+          <Button
             color="inherit"
             variant="outlined"
             sx={{ borderColor: "white", color: "white" }}
