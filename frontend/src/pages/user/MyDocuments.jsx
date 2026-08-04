@@ -124,6 +124,17 @@ return (
           </Button>
         )}
 
+        {user?.role !== "ADMIN" && (
+          <Button
+            variant="contained"
+            color="secondary"
+            sx={{ mr: 2 }}
+            onClick={() => navigate("/user/dashboard")}
+          >
+            Home
+          </Button>
+        )}
+
         <Button
           color="inherit"
           variant="outlined"
