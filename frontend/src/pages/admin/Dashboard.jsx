@@ -361,7 +361,9 @@ function AdminDashboard() {
                 const candidateUrl = selectedDocument.file_url || `/uploads/${selectedDocument.stored_file_name}`;
                 const resolvedUrl = candidateUrl.startsWith("http")
                   ? candidateUrl
-                  : `${API_BASE_URL}${candidateUrl.startsWith("/") ? "" : "/"}${candidateUrl}`;
+                  : candidateUrl.startsWith("/")
+                  ? `${API_BASE_URL}${candidateUrl}`
+                  : `${API_BASE_URL}/${candidateUrl}`;
                 return (resolvedUrl || "").toLowerCase().endsWith(".pdf") ? (
                   <Document
                     file={resolvedUrl}

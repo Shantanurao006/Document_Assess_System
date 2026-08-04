@@ -21,6 +21,8 @@ const app = express();
 // ----------------------
 // Middlewares
 // ----------------------
+app.set("trust proxy", true);
+
 app.use(cors());
 
 app.use(

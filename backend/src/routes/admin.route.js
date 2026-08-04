@@ -60,7 +60,9 @@ router.get("/documents/:adminId", async (req, res) => {
             [adminId]
         );
 
-        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+        const proto = req.get("x-forwarded-proto") || req.protocol;
+        const host = req.get("x-forwarded-host") || req.get("host");
+        const baseUrl = process.env.BASE_URL || `${proto}://${host}`;
         const documents = result.rows.map((doc) => ({
             ...doc,
             file_url: (() => {

@@ -65,7 +65,9 @@ const getLastSignature = async (req, res) => {
         }
 
         // expose a public URL to the signature file
-        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+        const proto = req.get("x-forwarded-proto") || req.protocol;
+        const host = req.get("x-forwarded-host") || req.get("host");
+        const baseUrl = process.env.BASE_URL || `${proto}://${host}`;
         const url = `${baseUrl}/uploads/signatures/${result.filename}`;
         return res.status(200).json({ success: true, data: { filename: result.filename, url } });
     } catch (error) {
