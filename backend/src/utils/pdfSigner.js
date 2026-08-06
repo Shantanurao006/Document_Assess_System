@@ -135,9 +135,10 @@ const signPdf = async (
         textSize,
         signatureHeight,
     } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields);
-    const columnGap = columnCount > 1 ? 16 : 0;
+    // Professional spacing between approvers
+    const columnGap = columnCount > 1 ? 40 : 0;
     const columnWidth = (boxWidth - (paddingX * 2) - (columnGap * (columnCount - 1))) / columnCount;
-    const signatureWidth = Math.min(100, Math.max(60, columnWidth * 0.5));
+    const signatureWidth = Math.min(80, Math.max(55, columnWidth * 0.42));
     const contentTop = boxBottom + boxHeight - paddingY - 8;
     const contentLeft = boxX + paddingX;
     const fieldCount = Math.max(orderedFields.length, 1);
@@ -177,7 +178,13 @@ const signPdf = async (
 
         orderedFields.forEach((fieldLabel, fieldIndex) => {
             const fieldY = detailsTopY - (fieldIndex * fieldSpacing);
-            const value = formatApprovalFieldValue(fieldLabel, entry);
+            let value = formatApprovalFieldValue(fieldLabel, entry);
+
+            // Prevent long emails from overflowing into the next column
+            if (fieldLabel === "Approved By" && value.length > 22) {
+                value = value.substring(0, 22) + "...";
+            }
+
             const renderedText = `${fieldLabel} : ${value}`;
 
             page.drawText(renderedText, {
