@@ -53,7 +53,8 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const getLayoutMetrics = (approvalRows, boxWidth, boxHeight, orderedFields) => {
     const fieldCount = Math.max(orderedFields.length, 1);
     const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
-    const maxColumns = boxWidth >= 700 ? 3 : boxWidth >= 460 ? 2 : 1;
+    // Always allow up to 3 approvers side by side
+const maxColumns = Math.min(3, Math.max(1, approvalRows.length));
     const availableHeight = Math.max(80, boxHeight - 34);
     const rowsPerColumn = Math.max(1, Math.floor(availableHeight / rowContentHeight));
     const requiredColumns = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / rowsPerColumn));
