@@ -136,11 +136,23 @@ const signPdf = async (
         signatureHeight,
     } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields);
     // Professional spacing between approvers
-    const columnGap = columnCount > 1 ? 40 : 0;
-    const columnWidth = (boxWidth - (paddingX * 2) - (columnGap * (columnCount - 1))) / columnCount;
-    const signatureWidth = Math.min(80, Math.max(55, columnWidth * 0.42));
-    const contentTop = boxBottom + boxHeight - paddingY - 8;
-    const contentLeft = boxX + paddingX;
+    // Fixed-size approval cards for a clean professional layout
+const columnGap = 60;
+const cardWidth = 250;
+const signatureWidth = 90;
+
+const contentTop = boxBottom + boxHeight - paddingY - 8;
+
+// Center the approval cards inside the approval box
+const totalCardsWidth =
+    (columnCount * cardWidth) +
+    ((columnCount - 1) * columnGap);
+
+const contentLeft =
+    boxX + Math.max(
+        paddingX,
+        (boxWidth - totalCardsWidth) / 2
+    );
     const fieldCount = Math.max(orderedFields.length, 1);
     const fieldSpacing = Math.max(11, Math.min(16, Math.floor((rowHeight - signatureHeight - 20) / fieldCount)));
 
@@ -157,7 +169,7 @@ const signPdf = async (
         const entry = approvalRows[entryIndex];
         const columnIndex = entryIndex % columnCount;
         const rowIndex = Math.floor(entryIndex / columnCount);
-        const columnLeft = contentLeft + (columnIndex * (columnWidth + columnGap));
+        const columnLeft = contentLeft + (columnIndex * (cardWidth + columnGap));
         const rowTop = contentTop - (rowIndex * rowHeight);
         const signatureY = Math.max(boxBottom + 10, rowTop - signatureHeight);
         const detailsTopY = signatureY - 16;
@@ -180,20 +192,21 @@ const signPdf = async (
             const fieldY = detailsTopY - (fieldIndex * fieldSpacing);
             let value = formatApprovalFieldValue(fieldLabel, entry);
 
-            // Prevent long emails from overflowing into the next column
-            if (fieldLabel === "Approved By" && value.length > 22) {
-                value = value.substring(0, 22) + "...";
-            }
+            page.drawText(`${fieldLabel} :`, {
+    x: columnLeft,
+    y: fieldY,
+    size: textSize,
+    font,
+    color: rgb(0,0,0),
+});
 
-            const renderedText = `${fieldLabel} : ${value}`;
-
-            page.drawText(renderedText, {
-                x: columnLeft,
-                y: fieldY,
-                size: textSize,
-                font,
-                color: rgb(0, 0, 0),
-            });
+page.drawText(value, {
+    x: columnLeft + 78,
+    y: fieldY,
+    size: textSize,
+    font,
+    color: rgb(0,0,0),
+});
         });
     }
 
