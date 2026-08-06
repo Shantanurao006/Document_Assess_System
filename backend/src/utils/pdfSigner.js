@@ -10,14 +10,37 @@ const DEFAULT_APPROVAL_FIELDS = [
     "Status",
 ];
 
+const DISPLAY_APPROVAL_FIELDS = [
+    "Approved By",
+    "Approved On",
+    "Status",
+];
+
+const formatApprovalDate = (value) => {
+    const parsedDate = value ? new Date(value) : null;
+
+    if (!parsedDate || Number.isNaN(parsedDate.getTime())) {
+        return value || "";
+    }
+
+    const month = parsedDate.toLocaleString("en-US", {
+        month: "short",
+        timeZone: "UTC",
+    });
+    const day = String(parsedDate.getUTCDate()).padStart(2, "0");
+    const year = parsedDate.getUTCFullYear();
+    const hours = String(parsedDate.getUTCHours()).padStart(2, "0");
+    const minutes = String(parsedDate.getUTCMinutes()).padStart(2, "0");
+
+    return `${month} ${day} ${year} ${hours}:${minutes}`;
+};
+
 const formatApprovalFieldValue = (fieldLabel, entry) => {
     switch (fieldLabel) {
-        case "Signature":
-            return `Signature ${entry.approvalOrder}`;
         case "Approved By":
             return entry.approvedBy;
         case "Approved On":
-            return entry.approvedOn;
+            return formatApprovalDate(entry.approvedOn);
         case "Status":
             return entry.status;
         default:
@@ -29,21 +52,20 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const getLayoutMetrics = (approvalRows, boxWidth, boxHeight, orderedFields) => {
     const fieldCount = Math.max(orderedFields.length, 1);
-    const rowContentHeight = Math.max(52, 18 + (fieldCount * 12));
+    const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
     const maxColumns = boxWidth >= 700 ? 3 : boxWidth >= 460 ? 2 : 1;
     const availableHeight = Math.max(80, boxHeight - 34);
     const rowsPerColumn = Math.max(1, Math.floor(availableHeight / rowContentHeight));
     const requiredColumns = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / rowsPerColumn));
     const columnCount = Math.min(maxColumns, requiredColumns);
-    const adjustedRowsPerColumn = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / columnCount));
-    const rowHeight = availableHeight / adjustedRowsPerColumn;
+    const rowCount = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / columnCount));
+    const rowHeight = availableHeight / rowCount;
     const textSize = approvalRows.length >= 6 ? 7 : approvalRows.length >= 4 ? 8 : 9;
-    const signatureHeight = Math.max(14, Math.min(26, rowHeight - 20));
+    const signatureHeight = Math.max(18, Math.min(34, rowHeight * 0.34));
 
     return {
-        availableHeight,
-        adjustedRowsPerColumn,
         columnCount,
+        rowCount,
         rowHeight,
         textSize,
         signatureHeight,
@@ -99,26 +121,26 @@ const signPdf = async (
     const paddingX = 14;
     const paddingY = 12;
     const approvalRows = approvalEntries.length > 0 ? approvalEntries : [];
-    const orderedFields = Array.isArray(approvalBoxLayout.fields) && approvalBoxLayout.fields.length > 0
+    const configuredFields = Array.isArray(approvalBoxLayout.fields) && approvalBoxLayout.fields.length > 0
         ? approvalBoxLayout.fields
         : DEFAULT_APPROVAL_FIELDS;
-    const headingSize = approvalRows.length > 2 ? 11 : 12;
+    const orderedFields = DISPLAY_APPROVAL_FIELDS.filter((fieldLabel) =>
+        configuredFields.includes(fieldLabel)
+    );
     const {
-        availableHeight,
-        adjustedRowsPerColumn,
         columnCount,
+        rowCount,
         rowHeight,
         textSize,
         signatureHeight,
     } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields);
     const columnGap = columnCount > 1 ? 16 : 0;
     const columnWidth = (boxWidth - (paddingX * 2) - (columnGap * (columnCount - 1))) / columnCount;
-    const signatureWidth = Math.min(84, Math.max(48, columnWidth * 0.26));
-    const contentTop = boxBottom + boxHeight - paddingY - 12;
+    const signatureWidth = Math.min(100, Math.max(60, columnWidth * 0.5));
+    const contentTop = boxBottom + boxHeight - paddingY - 8;
     const contentLeft = boxX + paddingX;
-    const detailStartOffset = signatureWidth + 16;
     const fieldCount = Math.max(orderedFields.length, 1);
-    const fieldSpacing = Math.max(8, Math.min(12, Math.floor((rowHeight - 10) / fieldCount)));
+    const fieldSpacing = Math.max(11, Math.min(16, Math.floor((rowHeight - signatureHeight - 20) / fieldCount)));
 
     page.drawRectangle({
         x: boxX,
@@ -131,12 +153,12 @@ const signPdf = async (
 
     for (let entryIndex = 0; entryIndex < approvalRows.length; entryIndex++) {
         const entry = approvalRows[entryIndex];
-        const columnIndex = Math.floor(entryIndex / adjustedRowsPerColumn);
-        const rowIndex = entryIndex % adjustedRowsPerColumn;
+        const columnIndex = entryIndex % columnCount;
+        const rowIndex = Math.floor(entryIndex / columnCount);
         const columnLeft = contentLeft + (columnIndex * (columnWidth + columnGap));
-        const detailStartX = columnLeft + detailStartOffset;
-        const rowTop = contentTop - 20 - (rowIndex * rowHeight);
-        const signatureY = Math.max(boxBottom + 6, rowTop - signatureHeight - 4);
+        const rowTop = contentTop - (rowIndex * rowHeight);
+        const signatureY = Math.max(boxBottom + 10, rowTop - signatureHeight);
+        const detailsTopY = signatureY - 16;
 
         if (entry.signaturePath && fs.existsSync(entry.signaturePath)) {
             const signatureBytes = fs.readFileSync(entry.signaturePath);
@@ -153,16 +175,12 @@ const signPdf = async (
         }
 
         orderedFields.forEach((fieldLabel, fieldIndex) => {
-            const fieldY = rowTop - 2 - (fieldIndex * fieldSpacing);
-            const labelX = fieldLabel === "Signature" ? columnLeft : detailStartX;
+            const fieldY = detailsTopY - (fieldIndex * fieldSpacing);
             const value = formatApprovalFieldValue(fieldLabel, entry);
-            const renderedText =
-                fieldLabel === "Signature"
-                    ? value
-                    : `${fieldLabel} : ${value}`;
+            const renderedText = `${fieldLabel} : ${value}`;
 
             page.drawText(renderedText, {
-                x: labelX,
+                x: columnLeft,
                 y: fieldY,
                 size: textSize,
                 font,
