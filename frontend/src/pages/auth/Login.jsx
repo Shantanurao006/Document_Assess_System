@@ -18,7 +18,6 @@ import {
   Fade,
 } from "@mui/material";
 
-import CloseIcon from "@mui/icons-material/Close";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -319,25 +318,6 @@ display="flex"
 justifyContent="space-between"
 alignItems="center"
 >
-
-<Typography
-fontWeight={700}
-fontSize={22}
->
-
-Change Password
-
-</Typography>
-
-<IconButton
-onClick={() =>
-setOpenChangePassword(false)
-}
->
-
-<CloseIcon/>
-
-</IconButton>
 
 </Box>
 
