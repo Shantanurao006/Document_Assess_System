@@ -15,7 +15,6 @@ const DISPLAY_APPROVAL_FIELDS = [
 ];
 
 const REJECTED_APPROVAL_FIELDS = [
-    "Approved On",
     "Status",
 ];
 
@@ -217,8 +216,15 @@ page.drawText(value, {
     x: columnLeft + 78,
     y: fieldY,
     size: textSize,
-    font,
-    color: rgb(0,0,0),
+    font:
+        fieldLabel === "Status"
+            ? await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+            : font,
+    color:
+        fieldLabel === "Status" &&
+        value === "Rejected"
+            ? rgb(0.85, 0, 0)
+            : rgb(0, 0, 0),
 });
         });
     }
