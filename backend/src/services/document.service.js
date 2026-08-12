@@ -12,17 +12,21 @@ exports.getMyDocuments = async (req, res) => {
             SELECT DISTINCT ON (COALESCE(da.approval_group_id, da.stored_file_name))
                 da.id,
                 da.original_file_name,
-                da.status,
+                CASE
+                    WHEN approval_stats.rejected_approvals > 0 THEN 'Rejected'
+                    WHEN approval_stats.completed_approvals = approval_stats.total_approvers THEN 'Approved'
+                    ELSE 'Pending'
+                END AS status,
                 da.assigned_datetime AS uploaded_datetime,
                 da.approved_datetime,
                 da.signed_pdf_name,
                 approval_stats.total_approvers,
                 approval_stats.completed_approvals,
                 CASE
-                    WHEN da.status = 'Pending' AND blocked_by.email IS NOT NULL
-                        THEN 'Pending approval from ' || blocked_by.email
-                    WHEN da.status = 'Pending'
-                        THEN 'Pending approval from ' || assigned_user.email
+                    WHEN approval_stats.rejected_approvals > 0
+                        THEN 'Rejected by ' || COALESCE(rejected_by.email, assigned_user.email)
+                    WHEN current_pending.email IS NOT NULL
+                        THEN 'Pending approval from ' || current_pending.email
                     WHEN da.approved_by IS NOT NULL
                         THEN approved_user.email
                     ELSE assigned_user.email
@@ -35,7 +39,8 @@ exports.getMyDocuments = async (req, res) => {
             INNER JOIN LATERAL (
                 SELECT
                     COUNT(*)::int AS total_approvers,
-                    COUNT(*) FILTER (WHERE grouped_da.status = 'Approved')::int AS completed_approvals
+                    COUNT(*) FILTER (WHERE grouped_da.status = 'Approved')::int AS completed_approvals,
+                    COUNT(*) FILTER (WHERE grouped_da.status = 'Rejected')::int AS rejected_approvals
                 FROM document_assignments grouped_da
                 WHERE grouped_da.uploaded_by = da.uploaded_by
                     AND COALESCE(grouped_da.approval_group_id, grouped_da.stored_file_name)
@@ -45,17 +50,30 @@ exports.getMyDocuments = async (req, res) => {
                 ON da.approved_by = approved_user.id
             LEFT JOIN LATERAL (
                 SELECT u.email
-                FROM document_assignments previous_da
+                FROM document_assignments pending_da
                 INNER JOIN users u
-                    ON previous_da.assigned_to = u.id
-                WHERE previous_da.uploaded_by = da.uploaded_by
-                    AND COALESCE(previous_da.approval_group_id, previous_da.stored_file_name)
+                    ON pending_da.assigned_to = u.id
+                WHERE pending_da.uploaded_by = da.uploaded_by
+                    AND COALESCE(pending_da.approval_group_id, pending_da.stored_file_name)
                         = COALESCE(da.approval_group_id, da.stored_file_name)
-                    AND previous_da.approval_order < da.approval_order
-                    AND previous_da.status <> 'Approved'
-                ORDER BY previous_da.approval_order ASC
+                    AND pending_da.status = 'Pending'
+                ORDER BY pending_da.approval_order ASC
                 LIMIT 1
-            ) blocked_by ON true
+            ) current_pending ON true
+            LEFT JOIN LATERAL (
+                SELECT COALESCE(rejected_user.email, assigned_rejected_user.email) AS email
+                FROM document_assignments rejected_da
+                INNER JOIN users assigned_rejected_user
+                    ON rejected_da.assigned_to = assigned_rejected_user.id
+                LEFT JOIN users rejected_user
+                    ON rejected_da.approved_by = rejected_user.id
+                WHERE rejected_da.uploaded_by = da.uploaded_by
+                    AND COALESCE(rejected_da.approval_group_id, rejected_da.stored_file_name)
+                        = COALESCE(da.approval_group_id, da.stored_file_name)
+                    AND rejected_da.status = 'Rejected'
+                ORDER BY rejected_da.approval_order ASC
+                LIMIT 1
+            ) rejected_by ON true
             WHERE uploaded_user.email = $1
             ORDER BY COALESCE(da.approval_group_id, da.stored_file_name), da.approval_order DESC, da.assigned_datetime DESC
             `,
