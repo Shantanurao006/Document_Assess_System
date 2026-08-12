@@ -107,6 +107,7 @@ const signPdf = async (
     const { width, height } = page.getSize();
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     const boxX = clamp(
         approvalBoxLayout.xRatio != null ? Math.round(approvalBoxLayout.xRatio * width) : approvalBoxLayout.x,
@@ -218,7 +219,7 @@ page.drawText(value, {
     size: textSize,
     font:
         fieldLabel === "Status"
-            ? await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+            ? boldFont
             : font,
     color:
         fieldLabel === "Status" &&
@@ -226,7 +227,8 @@ page.drawText(value, {
             ? rgb(0.85, 0, 0)
             : rgb(0, 0, 0),
 });
-        });
+
+});
     }
 
     const signedPdf = await pdfDoc.save();
