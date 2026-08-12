@@ -166,14 +166,14 @@ const signPdf = async (
     const fieldCount = Math.max(orderedFields.length, 1);
     const fieldSpacing = Math.max(11, Math.min(16, Math.floor((rowHeight - signatureHeight - 20) / fieldCount)));
 
-    page.drawRectangle({
-        x: boxX,
-        y: boxBottom,
-        width: boxWidth,
-        height: boxHeight,
-        color: rgb(1, 0.98, 0.94),
-        opacity: 0.35,
-    });
+    //page.drawRectangle({
+      //  x: boxX,
+        //y: boxBottom,
+        //width: boxWidth,
+        //height: boxHeight,
+        //color: rgb(1, 0.98, 0.94),
+        //opacity: 0.35,
+    //});
 
     for (let entryIndex = 0; entryIndex < approvalRows.length; entryIndex++) {
         const entry = approvalRows[entryIndex];
