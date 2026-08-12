@@ -65,8 +65,10 @@ const approveDocument = async (body, file) => {
         savedSignatureFilename,
 } = body;
 
+    const requiresSignature = status === "Approved";
+
     // allow using an existing saved signature when no file is uploaded
-    if (!file) {
+    if (requiresSignature && !file) {
         if (savedSignatureFilename) {
             // use provided filename (from frontend)
             file = { filename: savedSignatureFilename };
@@ -95,7 +97,7 @@ if (adminResult.rows.length === 0) {
 
 const admin = adminResult.rows[0];
     // If still no file, try to use the admin's last saved signature
-    if (!file) {
+    if (requiresSignature && !file) {
         const lastSig = await getLastSignatureForAdmin(admin.id);
         if (lastSig && lastSig.filename) {
             file = { filename: lastSig.filename };
@@ -165,10 +167,9 @@ const admin = adminResult.rows[0];
         storedFileName
     );
 
-    const uploadedSignaturePath = path.join(
-    signaturesDir,
-    file.filename
-);
+    const uploadedSignaturePath = file?.filename
+        ? path.join(signaturesDir, file.filename)
+        : null;
 
 console.log("PDF Path:", originalPdfPath);
 console.log("Signature Path:", uploadedSignaturePath);
@@ -180,10 +181,10 @@ console.log(
 
 console.log(
     "Signature Exists:",
-    fs.existsSync(uploadedSignaturePath)
+    uploadedSignaturePath ? fs.existsSync(uploadedSignaturePath) : false
 );
 
-if (!fs.existsSync(uploadedSignaturePath)) {
+if (requiresSignature && (!uploadedSignaturePath || !fs.existsSync(uploadedSignaturePath))) {
     const error = new Error(
         "Signature file not found. Please upload the signature again."
     );
@@ -248,7 +249,7 @@ const approvalEntries = approvalHistoryResult.rows
                 : historyRow.approved_by_email || historyRow.assigned_email,
         signaturePath:
             historyRow.id === Number(documentId)
-                ? uploadedSignaturePath
+                ? (status === "Approved" ? uploadedSignaturePath : null)
                 : historyRow.signed_by_image
                     ? path.join(signaturesDir, historyRow.signed_by_image)
                     : null,
@@ -276,7 +277,7 @@ const signedPdfPath = await signPdf(
     [
         status,
         approvalDateTime,
-        file.filename,
+        status === "Approved" ? file.filename : null,
         admin.id,
         path.basename(signedPdfPath),
         documentId,
@@ -286,7 +287,7 @@ const signedPdfPath = await signPdf(
     return {
         documentId,
         status,
-        signature: file.filename,
+        signature: status === "Approved" ? file?.filename : null,
         signedPdfPath,
     };
 };

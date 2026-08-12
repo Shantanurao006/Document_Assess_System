@@ -25,7 +25,7 @@ router.get("/documents/:adminId", async (req, res) => {
                 da.id,
                 da.original_file_name,
                 da.stored_file_name,
-                da.signed_pdf_name,
+                latest_signed.signed_pdf_name,
                 da.approval_box_config,
                 da.assigned_datetime,
                 da.status,
@@ -36,6 +36,16 @@ router.get("/documents/:adminId", async (req, res) => {
             FROM document_assignments da
             INNER JOIN users u
                 ON da.uploaded_by = u.id
+            LEFT JOIN LATERAL (
+                SELECT grouped_da.signed_pdf_name
+                FROM document_assignments grouped_da
+                WHERE grouped_da.uploaded_by = da.uploaded_by
+                    AND COALESCE(grouped_da.approval_group_id, grouped_da.stored_file_name)
+                        = COALESCE(da.approval_group_id, da.stored_file_name)
+                    AND grouped_da.signed_pdf_name IS NOT NULL
+                ORDER BY grouped_da.approval_order DESC
+                LIMIT 1
+            ) latest_signed ON true
             INNER JOIN LATERAL (
                 SELECT
                     COUNT(*)::int AS total_approvers,

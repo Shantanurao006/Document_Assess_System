@@ -11,8 +11,10 @@ const DEFAULT_APPROVAL_FIELDS = [
 ];
 
 const DISPLAY_APPROVAL_FIELDS = [
-    "Approved By",
     "Approved On",
+];
+
+const REJECTED_APPROVAL_FIELDS = [
     "Status",
 ];
 
@@ -37,8 +39,6 @@ const formatApprovalDate = (value) => {
 
 const formatApprovalFieldValue = (fieldLabel, entry) => {
     switch (fieldLabel) {
-        case "Approved By":
-            return entry.approvedBy;
         case "Approved On":
             return formatApprovalDate(entry.approvedOn);
         case "Status":
@@ -50,15 +50,24 @@ const formatApprovalFieldValue = (fieldLabel, entry) => {
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-const getLayoutMetrics = (approvalRows, boxWidth, boxHeight, orderedFields) => {
+const getLayoutMetrics = (
+    approvalRows,
+    boxWidth,
+    boxHeight,
+    orderedFields,
+    cardWidth,
+    columnGap
+) => {
     const fieldCount = Math.max(orderedFields.length, 1);
     const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
-    // Always allow up to 3 approvers side by side
-const maxColumns = Math.min(3, Math.max(1, approvalRows.length));
+    const usableWidth = Math.max(boxWidth - 28, cardWidth);
+    const fitColumns = Math.max(
+        1,
+        Math.floor((usableWidth + columnGap) / (cardWidth + columnGap))
+    );
+    const maxColumns = Math.min(3, fitColumns, Math.max(1, approvalRows.length));
     const availableHeight = Math.max(80, boxHeight - 34);
-    const rowsPerColumn = Math.max(1, Math.floor(availableHeight / rowContentHeight));
-    const requiredColumns = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / rowsPerColumn));
-    const columnCount = Math.min(maxColumns, requiredColumns);
+    const columnCount = Math.max(1, Math.min(maxColumns, Math.max(1, approvalRows.length)));
     const rowCount = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / columnCount));
     const rowHeight = availableHeight / rowCount;
     const textSize = approvalRows.length >= 6 ? 7 : approvalRows.length >= 4 ? 8 : 9;
@@ -128,31 +137,31 @@ const signPdf = async (
     const orderedFields = DISPLAY_APPROVAL_FIELDS.filter((fieldLabel) =>
         configuredFields.includes(fieldLabel)
     );
+    const columnGap = 60;
+    const cardWidth = 250;
     const {
         columnCount,
         rowCount,
         rowHeight,
         textSize,
         signatureHeight,
-    } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields);
+    } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields, cardWidth, columnGap);
     // Professional spacing between approvers
     // Fixed-size approval cards for a clean professional layout
-const columnGap = 60;
-const cardWidth = 250;
-const signatureWidth = 90;
+    const signatureWidth = 90;
 
-const contentTop = boxBottom + boxHeight - paddingY - 8;
+    const contentTop = boxBottom + boxHeight - paddingY - 8;
 
-// Center the approval cards inside the approval box
-const totalCardsWidth =
-    (columnCount * cardWidth) +
-    ((columnCount - 1) * columnGap);
+    // Center the approval cards inside the approval box
+    const totalCardsWidth =
+        (columnCount * cardWidth) +
+        ((columnCount - 1) * columnGap);
 
-const contentLeft =
-    boxX + Math.max(
-        paddingX,
-        (boxWidth - totalCardsWidth) / 2
-    );
+    const contentLeft =
+        boxX + Math.max(
+            paddingX,
+            (boxWidth - totalCardsWidth) / 2
+        );
     const fieldCount = Math.max(orderedFields.length, 1);
     const fieldSpacing = Math.max(11, Math.min(16, Math.floor((rowHeight - signatureHeight - 20) / fieldCount)));
 
@@ -167,6 +176,9 @@ const contentLeft =
 
     for (let entryIndex = 0; entryIndex < approvalRows.length; entryIndex++) {
         const entry = approvalRows[entryIndex];
+        const entryFields = entry.status === "Rejected"
+            ? REJECTED_APPROVAL_FIELDS
+            : orderedFields;
         const columnIndex = entryIndex % columnCount;
         const rowIndex = Math.floor(entryIndex / columnCount);
         const columnLeft = contentLeft + (columnIndex * (cardWidth + columnGap));
@@ -174,7 +186,7 @@ const contentLeft =
         const signatureY = Math.max(boxBottom + 10, rowTop - signatureHeight);
         const detailsTopY = signatureY - 16;
 
-        if (entry.signaturePath && fs.existsSync(entry.signaturePath)) {
+        if (entry.status !== "Rejected" && entry.signaturePath && fs.existsSync(entry.signaturePath)) {
             const signatureBytes = fs.readFileSync(entry.signaturePath);
             const signatureImage = entry.signaturePath.toLowerCase().endsWith(".png")
                 ? await pdfDoc.embedPng(signatureBytes)
@@ -188,7 +200,7 @@ const contentLeft =
             });
         }
 
-        orderedFields.forEach((fieldLabel, fieldIndex) => {
+        entryFields.forEach((fieldLabel, fieldIndex) => {
             const fieldY = detailsTopY - (fieldIndex * fieldSpacing);
             let value = formatApprovalFieldValue(fieldLabel, entry);
 

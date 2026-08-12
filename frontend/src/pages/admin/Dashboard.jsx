@@ -179,7 +179,11 @@ function AdminDashboard() {
         return;
       }
 
-      if (!signatureImage && !signatureFilename) {
+      if (
+        approvalStatus === "Approved" &&
+        !signatureImage &&
+        !signatureFilename
+      ) {
         alert("Please upload your signature or use your saved signature.");
         return;
       }
@@ -189,9 +193,9 @@ function AdminDashboard() {
       formData.append("status", approvalStatus);
       formData.append("approvalDateTime", approvalDateTime.toISOString());
       formData.append("approvedBy", user.email);
-      if (signatureImage) {
+      if (approvalStatus === "Approved" && signatureImage) {
         formData.append("signature", signatureImage);
-      } else if (signatureFilename) {
+      } else if (approvalStatus === "Approved" && signatureFilename) {
         formData.append("savedSignatureFilename", signatureFilename);
       }
 
@@ -484,23 +488,27 @@ function AdminDashboard() {
               />
             </LocalizationProvider>
 
-            {signaturePreview && (
-              <Box mb={2}>
-                <Typography fontWeight="bold">Current Signature</Typography>
-                <img
-                  src={signaturePreview}
-                  alt="signature"
-                  style={{ width: 220, border: "1px solid #ddd", marginTop: 10, display: "block" }}
-                />
-              </Box>
-            )}
+            {approvalStatus === "Approved" && (
+              <>
+                {signaturePreview && (
+                  <Box mb={2}>
+                    <Typography fontWeight="bold">Current Signature</Typography>
+                    <img
+                      src={signaturePreview}
+                      alt="signature"
+                      style={{ width: 220, border: "1px solid #ddd", marginTop: 10, display: "block" }}
+                    />
+                  </Box>
+                )}
 
-            <Box mt={signaturePreview ? 1 : 3}>
-              <Button variant="contained" component="label">
-                {signaturePreview ? "Replace Signature" : "Upload Signature"}
-                <input hidden type="file" accept="image/*" onChange={handleSignatureUpload} />
-              </Button>
-            </Box>
+                <Box mt={signaturePreview ? 1 : 3}>
+                  <Button variant="contained" component="label">
+                    {signaturePreview ? "Replace Signature" : "Upload Signature"}
+                    <input hidden type="file" accept="image/*" onChange={handleSignatureUpload} />
+                  </Button>
+                </Box>
+              </>
+            )}
           </Box>
         </DialogContent>
 
