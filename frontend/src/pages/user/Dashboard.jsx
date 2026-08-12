@@ -709,7 +709,6 @@ const nextY = Math.min(
                                 position: "absolute",
                                 top: 0,
                                 left: 0,
-                                pointerEvents: "none",
                                 zIndex: 2,
                               }}
                             >
@@ -767,7 +766,10 @@ const nextY = Math.min(
                                       fontSize: "inherit",
                                     },
                                   }}
-                                  onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
+                                  onPointerDown={(event) => {
+                                    console.log("Annotation pointer down");
+                                    handleDragStart(event, "preview", documentIndex, annotationIndex);
+                                  }}
                                 >
                                   <Box
                                     sx={{
