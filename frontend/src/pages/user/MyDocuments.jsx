@@ -16,6 +16,9 @@ import {
     TableRow,
     Chip,
     IconButton,
+    Tab,
+    Tabs,
+    TextField,
     Tooltip,
 } from "@mui/material";
 
@@ -34,6 +37,8 @@ function MyDocuments() {
     const navigate = useNavigate();
 
     const [documents, setDocuments] = useState([]);
+    const [statusTab, setStatusTab] = useState("Pending");
+    const [searchText, setSearchText] = useState("");
 
 const user = getStoredUser();
 
@@ -115,6 +120,31 @@ const handleViewUploadedFile = (storedFileName) => {
     );
 
 };
+
+const filteredDocuments = [...documents]
+    .sort(
+        (firstDoc, secondDoc) =>
+            new Date(secondDoc.uploaded_datetime).getTime() -
+            new Date(firstDoc.uploaded_datetime).getTime()
+    )
+    .filter((doc) => doc.status === statusTab)
+    .filter((doc) => {
+        const query = searchText.trim().toLowerCase();
+
+        if (!query) {
+            return true;
+        }
+
+        return [
+            doc.id,
+            doc.original_file_name,
+            doc.approver_email,
+            doc.status,
+        ]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query));
+    });
+
 return (
   <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
 
@@ -187,6 +217,26 @@ return (
         Documents uploaded by you.
       </Typography>
 
+      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+        <Tabs
+          value={statusTab}
+          onChange={(_, nextValue) => setStatusTab(nextValue)}
+          sx={{ mb: 2 }}
+        >
+          <Tab label="Pending" value="Pending" />
+          <Tab label="Approved" value="Approved" />
+          <Tab label="Rejected" value="Rejected" />
+        </Tabs>
+
+        <TextField
+          fullWidth
+          label="Search documents"
+          placeholder="Search by ID, document, approver, or status"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+        />
+      </Paper>
+
       <Paper elevation={3}>
 
         <TableContainer>
@@ -235,7 +285,7 @@ return (
 
             <TableBody>
 
-              {documents.length === 0 ? (
+              {filteredDocuments.length === 0 ? (
 
                 <TableRow>
 
@@ -250,7 +300,7 @@ return (
 
               ) : (
 
-                documents.map((doc) => (
+                filteredDocuments.map((doc) => (
 
                   <TableRow key={doc.id}>
 

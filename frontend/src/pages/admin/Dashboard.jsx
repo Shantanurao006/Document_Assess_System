@@ -22,6 +22,9 @@ import {
   DialogActions,
   IconButton,
   Stack,
+  Tab,
+  Tabs,
+  TextField,
 } from "@mui/material";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -62,6 +65,8 @@ function AdminDashboard() {
   const user = getStoredUser();
 
   const [documents, setDocuments] = useState([]);
+  const [statusTab, setStatusTab] = useState("Pending");
+  const [searchText, setSearchText] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [previewDims, setPreviewDims] = useState({ width: 700, height: 900, offsetLeft: 0, offsetTop: 0 });
@@ -223,6 +228,30 @@ function AdminDashboard() {
     }
   };
 
+  const filteredDocuments = [...documents]
+    .sort(
+      (firstDoc, secondDoc) =>
+        new Date(secondDoc.assigned_datetime).getTime() -
+        new Date(firstDoc.assigned_datetime).getTime()
+    )
+    .filter((doc) => doc.status === statusTab)
+    .filter((doc) => {
+      const query = searchText.trim().toLowerCase();
+
+      if (!query) {
+        return true;
+      }
+
+      return [
+        doc.id,
+        doc.original_file_name,
+        doc.uploaded_by_email,
+        doc.status,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query));
+    });
+
   return (
     <Box sx={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
       <AppBar position="static">
@@ -268,6 +297,26 @@ function AdminDashboard() {
           Documents assigned to you for approval.
         </Typography>
 
+        <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+          <Tabs
+            value={statusTab}
+            onChange={(_, nextValue) => setStatusTab(nextValue)}
+            sx={{ mb: 2 }}
+          >
+            <Tab label="Pending" value="Pending" />
+            <Tab label="Approved" value="Approved" />
+            <Tab label="Rejected" value="Rejected" />
+          </Tabs>
+
+          <TextField
+            fullWidth
+            label="Search documents"
+            placeholder="Search by ID, document, uploader, or status"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+          />
+        </Paper>
+
         <Paper elevation={3}>
           <TableContainer>
             <Table>
@@ -297,14 +346,14 @@ function AdminDashboard() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {documents.length === 0 ? (
+                {filteredDocuments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} align="center">
-                      No Documents Assigned
+                      No Documents Found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  documents.map((doc) => (
+                  filteredDocuments.map((doc) => (
                     <TableRow key={doc.id}>
                       <TableCell>{doc.id}</TableCell>
                       <TableCell>{doc.original_file_name}</TableCell>
