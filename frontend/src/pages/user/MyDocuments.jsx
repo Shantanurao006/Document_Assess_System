@@ -20,12 +20,14 @@ import {
 } from "@mui/material";
 
 import DownloadIcon from "@mui/icons-material/Download";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import {
     getMyDocuments,
     downloadSignedPdf,
 } from "../../api/documentApi";
 import { clearUserSession, getStoredUser } from "../../auth/session";
+import { API_BASE_URL } from "../../api/api";
 
 function MyDocuments() {
 
@@ -96,6 +98,21 @@ const handleDownload = async (documentId, fileName) => {
         alert("Unable to download document.");
 
     }
+
+};
+
+const handleViewUploadedFile = (storedFileName) => {
+
+    if (!storedFileName) {
+        alert("Uploaded file is not available.");
+        return;
+    }
+
+    window.open(
+        `${API_BASE_URL}/uploads/${storedFileName}`,
+        "_blank",
+        "noopener,noreferrer"
+    );
 
 };
 return (
@@ -205,6 +222,10 @@ return (
                 </TableCell>
 
                 <TableCell align="center">
+                  <b>View</b>
+                </TableCell>
+
+                <TableCell align="center">
                   <b>Download</b>
                 </TableCell>
 
@@ -219,7 +240,7 @@ return (
                 <TableRow>
 
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     align="center"
                   >
                     No Documents Found
@@ -278,6 +299,20 @@ return (
                       />
 
                     </TableCell>
+
+<TableCell align="center">
+  <Tooltip title="View Uploaded Document">
+    <span>
+      <IconButton
+        color="primary"
+        onClick={() => handleViewUploadedFile(doc.stored_file_name)}
+      >
+        <VisibilityIcon />
+      </IconButton>
+    </span>
+  </Tooltip>
+</TableCell>
+
 <TableCell align="center">
   <Tooltip
     title={

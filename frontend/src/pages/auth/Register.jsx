@@ -5,10 +5,14 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
+  IconButton,
+  InputAdornment,
   Paper,
   TextField,
   Typography,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -17,6 +21,8 @@ function Register() {
     confirmPin: "",
     isAdmin: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -113,7 +119,7 @@ function Register() {
           fullWidth
           margin="normal"
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Enter a secure password"
           name="pin"
           value={formData.pin}
@@ -122,13 +128,25 @@ function Register() {
             maxLength: 64,
           }}
           autoComplete="new-password"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  edge="end"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <TextField
           fullWidth
           margin="normal"
           label="Confirm Password"
-          type="password"
+          type={showConfirmPassword ? "text" : "password"}
           placeholder="Re-enter password"
           name="confirmPin"
           value={formData.confirmPin}
@@ -137,6 +155,18 @@ function Register() {
             maxLength: 64,
           }}
           autoComplete="new-password"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  edge="end"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                >
+                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <FormControlLabel

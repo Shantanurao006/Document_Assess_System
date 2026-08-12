@@ -5,10 +5,14 @@ import { saveUserSession } from "../../auth/session";
 import {
   Box,
   Button,
+  IconButton,
+  InputAdornment,
   Paper,
   TextField,
   Typography,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 function Login() {
   const navigate = useNavigate();
@@ -20,6 +24,10 @@ function Login() {
     pin: "",
   });
   const [changeMode, setChangeMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [changeData, setChangeData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -209,12 +217,24 @@ function Login() {
           margin="normal"
           label="Password"
           name="pin"
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Enter your password"
           value={formData.pin}
           onChange={handleChange}
           InputLabelProps={{ shrink: true }}
           autoComplete="current-password"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  edge="end"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <Button
@@ -240,33 +260,69 @@ function Login() {
               margin="normal"
               label="Current Password"
               name="currentPassword"
-              type="password"
+              type={showCurrentPassword ? "text" : "password"}
               placeholder="Enter current password"
               value={changeData.currentPassword}
               onChange={handleChangeData}
               InputLabelProps={{ shrink: true }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      onClick={() => setShowCurrentPassword((prev) => !prev)}
+                    >
+                      {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <TextField
               fullWidth
               margin="normal"
               label="New Password"
               name="newPassword"
-              type="password"
+              type={showNewPassword ? "text" : "password"}
               placeholder="Enter new password"
               value={changeData.newPassword}
               onChange={handleChangeData}
               InputLabelProps={{ shrink: true }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      onClick={() => setShowNewPassword((prev) => !prev)}
+                    >
+                      {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <TextField
               fullWidth
               margin="normal"
               label="Confirm New Password"
               name="confirmNewPassword"
-              type="password"
+              type={showConfirmNewPassword ? "text" : "password"}
               placeholder="Confirm new password"
               value={changeData.confirmNewPassword}
               onChange={handleChangeData}
               InputLabelProps={{ shrink: true }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      onClick={() => setShowConfirmNewPassword((prev) => !prev)}
+                    >
+                      {showConfirmNewPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               variant="contained"

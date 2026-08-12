@@ -12,6 +12,7 @@ exports.getMyDocuments = async (req, res) => {
             SELECT DISTINCT ON (COALESCE(da.approval_group_id, da.stored_file_name))
                 da.id,
                 da.original_file_name,
+                da.stored_file_name,
                 CASE
                     WHEN approval_stats.rejected_approvals > 0 THEN 'Rejected'
                     WHEN approval_stats.completed_approvals = approval_stats.total_approvers THEN 'Approved'
