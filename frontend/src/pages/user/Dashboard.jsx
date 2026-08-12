@@ -54,6 +54,7 @@ function UserDashboard() {
   const previewContainerRef = useRef(null);
   const previewRefs = useRef([]);
   const [previewDims, setPreviewDims] = useState([]);
+  const [pageWidths, setPageWidths] = useState([]);
   const [draggingDocIndex, setDraggingDocIndex] = useState(0);
   const [draggingAnnotationIndex, setDraggingAnnotationIndex] = useState(null);
   const previewUrls = documents.map((doc) => doc.previewUrl).join("|");
@@ -70,22 +71,42 @@ function UserDashboard() {
     );
   }, []);
 
-  const getPreviewWidth = useCallback((index) => {
-    const container = previewRefs.current[index];
-    if (!container) return 900;
-    const width = container.clientWidth;
-    return width > 0 ? Math.max(width - 8, 640) : 900;
-  }, []);
 
-  const updatePreviewDims = useCallback(() => {
-    const dims = previewRefs.current.map((container) => {
-      const pageElement = getPreviewPageElement(container);
-      if (!pageElement) return null;
-      const rect = pageElement.getBoundingClientRect();
-      return rect ? { width: rect.width, height: rect.height } : null;
+const updatePreviewDims = useCallback(() => {
+  const dims = [];
+  const widths = [];
+
+  previewRefs.current.forEach((container) => {
+    if (!container) {
+      dims.push(null);
+      widths.push(900);
+      return;
+    }
+
+    const pageElement = getPreviewPageElement(container);
+
+    if (!pageElement) {
+      dims.push(null);
+      widths.push(900);
+      return;
+    }
+
+    const rect = pageElement.getBoundingClientRect();
+
+    dims.push({
+      width: rect.width,
+      height: rect.height,
     });
-    setPreviewDims(dims);
-  }, [getPreviewPageElement]);
+
+    widths.push(
+      Math.max(container.clientWidth - 8, 640)
+    );
+  });
+
+  setPreviewDims(dims);
+  setPageWidths(widths);
+
+}, [getPreviewPageElement]);
 
   const hasApprovalBox = (document) =>
     (document.annotations || []).some(
@@ -105,7 +126,13 @@ function UserDashboard() {
             Math.max(event.clientX - rect.left - statusSize.width / 2, 12),
             Math.max(rect.width - statusSize.width - 12, 12)
           );
-          const nextY = Math.max(rect.height - statusSize.height - 12, 12);
+          const nextY = Math.min(
+    Math.max(
+        event.clientY - rect.top - statusSize.height / 2,
+        12
+    ),
+    Math.max(rect.height - statusSize.height - 12, 12)
+);
 
           setStatusPlacement({ x: nextX, y: nextY });
           // update document annotation live
@@ -115,10 +142,10 @@ function UserDashboard() {
             copy[draggingDocIndex].annotations = copy[draggingDocIndex].annotations || [];
             const annotation = copy[draggingDocIndex].annotations[draggingAnnotationIndex] || {};
             const ratioConfig = {
-              xRatio: nextX / rect.width,
-              yRatio: nextY / rect.height,
-              widthRatio: statusSize.width / rect.width,
-              heightRatio: statusSize.height / rect.height,
+                xRatio: nextX / rect.width,
+                yRatio: nextY / rect.height,
+                widthRatio: statusSize.width / rect.width,
+                heightRatio: statusSize.height / rect.height,
             };
             copy[draggingDocIndex].annotations[draggingAnnotationIndex] = {
               ...annotation,
@@ -145,7 +172,8 @@ function UserDashboard() {
       for (let i = 0; i < previewRefs.current.length; i++) {
         const el = previewRefs.current[i];
         if (!el) continue;
-        const r = el.getBoundingClientRect();
+        const pageElement = getPreviewPageElement(previewRefs.current[i]);
+        const r = pageElement.getBoundingClientRect();
         if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) {
           targetIndex = i;
           break;
@@ -153,30 +181,41 @@ function UserDashboard() {
       }
 
       if (targetIndex !== -1) {
-        const pageElement = getPreviewPageElement(previewRefs.current[targetIndex]);
-        const previewRect = pageElement?.getBoundingClientRect();
-        if (!previewRect) {
-          setIsDragging(false);
-          return;
-        }
-        const nextX = Math.min(
-          Math.max(event.clientX - previewRect.left - statusSize.width / 2, 12),
-          Math.max(previewRect.width - statusSize.width - 12, 12)
-        );
-        const bottomAnchorY = Math.max(previewRect.height - statusSize.height - 12, 12);
-        const nextY = bottomAnchorY;
+        const container = previewRefs.current[targetIndex];
+const pageElement = getPreviewPageElement(container);
 
+const containerRect = container.getBoundingClientRect();
+const pageRect = pageElement.getBoundingClientRect();
+
+
+const nextX = Math.min(
+    Math.max(
+        event.clientX -
+        containerRect.left -
+        statusSize.width / 2,
+        12
+    ),
+    Math.max(containerRect.width - statusSize.width - 12, 12)
+);
+
+const nextY = Math.min(
+    Math.max(
+        event.clientY -
+        containerRect.top -
+        statusSize.height / 2,
+        12
+    ),
+    Math.max(containerRect.height - statusSize.height - 12, 12)
+);
         setStatusPlacement({ x: nextX, y: nextY });
         setDraggingDocIndex(targetIndex);
 
-        const ratioConfig = previewRect
-          ? {
-              xRatio: nextX / previewRect.width,
-              yRatio: nextY / previewRect.height,
-              widthRatio: statusSize.width / previewRect.width,
-              heightRatio: statusSize.height / previewRect.height,
-            }
-          : {};
+        const ratioConfig = {
+          xRatio: nextX / pageRect.width,
+          yRatio: nextY / pageRect.height,
+          widthRatio: statusSize.width / pageRect.width,
+          heightRatio: statusSize.height / pageRect.height,
+        };
 
         if (dragSource === "side") {
           const newAnnotation = {
@@ -230,7 +269,9 @@ function UserDashboard() {
   }, [dragSource, isDragging, draggingAnnotationIndex, statusSize, draggingDocIndex, getPreviewPageElement]);
 
   useEffect(() => {
-    updatePreviewDims();
+    requestAnimationFrame(() => {
+      updatePreviewDims();
+    });
 
     if (typeof ResizeObserver === "undefined") return undefined;
 
@@ -402,11 +443,11 @@ function UserDashboard() {
       setStatusSize({ width: nextWidth, height: nextHeight });
 
       const previewEl = previewRefs.current[documentIndex];
-      const previewRect = previewEl?.getBoundingClientRect();
+      const previewRect = getPreviewPageElement(previewEl)?.getBoundingClientRect();
       const ratioConfig = previewRect
         ? {
-            xRatio: annotation?.x / previewRect.width,
-            yRatio: annotation?.y / previewRect.height,
+            xRatio: (annotation?.x ?? 0) / previewRect.width,
+            yRatio: (annotation?.y ?? 0) / previewRect.height,
             widthRatio: nextWidth / previewRect.width,
             heightRatio: nextHeight / previewRect.height,
           }
@@ -634,7 +675,7 @@ function UserDashboard() {
                         {document.previewUrl ? (
                           <>
                             {document.file?.type.startsWith("image/") ? (
-                              <Box sx={{ display: "block", position: "relative", width: "100%", maxWidth: "100%" }}>
+                              <Box sx={{ display: "block", position: "relative", width: "fit-content", maxWidth: "100%" }}>
                                 <img
                                   src={document.previewUrl}
                                   alt={document.file?.name || "Document preview"}
@@ -654,15 +695,25 @@ function UserDashboard() {
                                   error={<Typography color="error">Unable to load PDF.</Typography>}
                                 >
                                   <Page
-                                    pageNumber={1}
-                                    width={getPreviewWidth(documentIndex)}
-                                    onRenderSuccess={handlePdfRenderSuccess}
-                                  />
+    pageNumber={1}
+    width={pageWidths[documentIndex] || 900}
+    
+    onRenderSuccess={handlePdfRenderSuccess}
+/>
                                 </Document>
                               </Box>
                             )}
 
-                            {document.annotations?.map((annotation, annotationIndex) => {
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                pointerEvents: "none",
+                                zIndex: 2,
+                              }}
+                            >
+                              {document.annotations?.map((annotation, annotationIndex) => {
                               const dims = previewDims[documentIndex] || {};
                               const availableWidth = dims.width || 0;
                               const availableHeight = dims.height || 0;
@@ -674,14 +725,8 @@ function UserDashboard() {
                                 annotation.heightRatio != null && availableHeight
                                   ? Math.min(annotation.heightRatio * availableHeight, availableHeight - 24)
                                   : Math.min(annotation.height || 156, Math.max(availableHeight - 24, 80));
-                              let left =
-                                annotation.xRatio != null && availableWidth
-                                  ? annotation.xRatio * availableWidth
-                                  : annotation.x ?? 16;
-                              let top =
-                                annotation.yRatio != null && availableHeight
-                                  ? annotation.yRatio * availableHeight
-                                  : annotation.y ?? 16;
+                              let left = annotation.x ?? 16;
+                              let top = annotation.y ?? 16;
                               const maxLeft = Math.max(availableWidth - width - 12, 12);
                               const maxTop = Math.max(availableHeight - height - 12, 12);
                               left = Math.min(Math.max(left, 12), maxLeft);
@@ -767,6 +812,7 @@ function UserDashboard() {
                                 </Box>
                               );
                             })}
+                          </Box>
                           </>
                         ) : (
                           <Box
