@@ -14,6 +14,22 @@ import {
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
+const getPasswordFieldSlots = (isVisible, toggleVisibility) => ({
+  input: {
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          edge="end"
+          onClick={toggleVisibility}
+          aria-label={isVisible ? "Hide password" : "Show password"}
+        >
+          {isVisible ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  },
+});
+
 function Register() {
   const [formData, setFormData] = useState({
     email: "",
@@ -128,18 +144,10 @@ function Register() {
             maxLength: 64,
           }}
           autoComplete="new-password"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  edge="end"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
+          slotProps={getPasswordFieldSlots(
+            showPassword,
+            () => setShowPassword((prev) => !prev)
+          )}
         />
 
         <TextField
@@ -155,18 +163,10 @@ function Register() {
             maxLength: 64,
           }}
           autoComplete="new-password"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  edge="end"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                >
-                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
+          slotProps={getPasswordFieldSlots(
+            showConfirmPassword,
+            () => setShowConfirmPassword((prev) => !prev)
+          )}
         />
 
         <FormControlLabel

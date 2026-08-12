@@ -14,6 +14,22 @@ import {
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
+const getPasswordFieldSlots = (isVisible, toggleVisibility) => ({
+  input: {
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          edge="end"
+          onClick={toggleVisibility}
+          aria-label={isVisible ? "Hide password" : "Show password"}
+        >
+          {isVisible ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  },
+});
+
 function Login() {
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(window.location.search);
@@ -223,18 +239,10 @@ function Login() {
           onChange={handleChange}
           InputLabelProps={{ shrink: true }}
           autoComplete="current-password"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  edge="end"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
+          slotProps={getPasswordFieldSlots(
+            showPassword,
+            () => setShowPassword((prev) => !prev)
+          )}
         />
 
         <Button
@@ -265,18 +273,10 @@ function Login() {
               value={changeData.currentPassword}
               onChange={handleChangeData}
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      onClick={() => setShowCurrentPassword((prev) => !prev)}
-                    >
-                      {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
+              slotProps={getPasswordFieldSlots(
+                showCurrentPassword,
+                () => setShowCurrentPassword((prev) => !prev)
+              )}
             />
             <TextField
               fullWidth
@@ -288,18 +288,10 @@ function Login() {
               value={changeData.newPassword}
               onChange={handleChangeData}
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      onClick={() => setShowNewPassword((prev) => !prev)}
-                    >
-                      {showNewPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
+              slotProps={getPasswordFieldSlots(
+                showNewPassword,
+                () => setShowNewPassword((prev) => !prev)
+              )}
             />
             <TextField
               fullWidth
@@ -311,18 +303,10 @@ function Login() {
               value={changeData.confirmNewPassword}
               onChange={handleChangeData}
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      edge="end"
-                      onClick={() => setShowConfirmNewPassword((prev) => !prev)}
-                    >
-                      {showConfirmNewPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
+              slotProps={getPasswordFieldSlots(
+                showConfirmNewPassword,
+                () => setShowConfirmNewPassword((prev) => !prev)
+              )}
             />
             <Button
               variant="contained"
