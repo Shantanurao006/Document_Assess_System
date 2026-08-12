@@ -369,16 +369,16 @@ return (
       doc.status === "Approved"
         ? "Download Signed Document"
         : doc.status === "Rejected"
-        ? "Document was rejected"
+        ? "Download Rejected Document"
         : "Document is pending approval"
     }
   >
     <span>
       <IconButton
         color="primary"
-        disabled={doc.status !== "Approved"}
+        disabled={doc.status === "Pending"}
         onClick={() => {
-          if (doc.status === "Approved") {
+          if (doc.status === "Approved" || doc.status === "Rejected") {
             handleDownload(
               doc.id,
               doc.signed_pdf_name

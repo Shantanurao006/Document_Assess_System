@@ -15,6 +15,7 @@ const DISPLAY_APPROVAL_FIELDS = [
 ];
 
 const REJECTED_APPROVAL_FIELDS = [
+    "Approved On",
     "Status",
 ];
 
