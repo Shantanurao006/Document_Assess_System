@@ -10,7 +10,16 @@ import {
   Paper,
   TextField,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Fade,
 } from "@mui/material";
+
+import CloseIcon from "@mui/icons-material/Close";
+import LockResetIcon from "@mui/icons-material/LockReset";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
@@ -39,7 +48,7 @@ function Login() {
     email: "",
     pin: "",
   });
-  const [changeMode, setChangeMode] = useState(false);
+  const [openChangePassword, setOpenChangePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -145,7 +154,7 @@ function Login() {
       });
 
       alert("Password changed successfully. Please login with your new password.");
-      setChangeMode(false);
+      setOpenChangePassword(false);
       setChangeData({
         currentPassword: "",
         newPassword: "",
@@ -165,17 +174,19 @@ function Login() {
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
-      width="100%"
-      position="relative"
-      sx={{
-        backgroundColor: "#ffffff",
-        p: 2,
-      }}
-    >
+sx={{
+display:"flex",
+justifyContent:"center",
+alignItems:"center",
+minHeight:"100vh",
+width:"100%",
+overflow:"auto",
+px:2,
+py:4,
+background:
+"linear-gradient(135deg,#eff6ff 0%,#dbeafe 40%,#ffffff 100%)",
+}}
+>
       <Box
         position="absolute"
         inset={0}
@@ -187,26 +198,41 @@ function Login() {
       />
 
       <Paper
-        elevation={8}
-        sx={{
-          position: "relative",
-          zIndex: 1,
-          width: { xs: "100%", sm: 460 },
-          maxWidth: 520,
-          p: { xs: 4, sm: 6 },
-          borderRadius: 4,
-          boxShadow: "0 28px 80px rgba(15, 23, 42, 0.12)",
-          backgroundColor: "#ffffff",
-        }}
-      >
+elevation={10}
+sx={{
+width:{
+xs:"100%",
+sm:430,
+md:460
+},
+maxWidth:460,
+borderRadius:5,
+p:{
+xs:3,
+sm:5
+},
+boxShadow:"0 20px 60px rgba(0,0,0,.12)"
+}}
+>
         <Typography
-          variant="h4"
-          textAlign="center"
-          fontWeight="700"
-          mb={1}
-        >
-          Login
-        </Typography>
+variant="h4"
+fontWeight={700}
+textAlign="center"
+>
+
+Welcome Back
+
+</Typography>
+
+<Typography
+textAlign="center"
+color="text.secondary"
+mb={4}
+>
+
+Sign in to continue
+
+</Typography>
         <Typography
           variant="body2"
           textAlign="center"
@@ -246,79 +272,165 @@ function Login() {
         />
 
         <Button
-          variant="contained"
-          fullWidth
-          sx={{ mt: 3, py: 1.6, fontWeight: 600 }}
-          onClick={handleLogin}
-        >
-          Login
-        </Button>
+  variant="contained"
+  fullWidth
+  onClick={handleLogin}
+  sx={{
+    mt:3,
+    height:52,
+    fontWeight:700,
+    borderRadius:3,
+    textTransform:"none"
+  }}
+>
+  Login
+</Button>
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
           <Typography variant="body2">Need to change password?</Typography>
-          <Button variant="text" onClick={() => setChangeMode((prev) => !prev)}>
-            {changeMode ? "Cancel" : "Change Password"}
-          </Button>
+          <Button
+variant="text"
+startIcon={<LockResetIcon />}
+onClick={() => setOpenChangePassword(true)}
+>
+Change Password
+</Button>
         </Box>
 
-        {changeMode && (
-          <Box sx={{ mt: 3 }}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Current Password"
-              name="currentPassword"
-              type={showCurrentPassword ? "text" : "password"}
-              placeholder="Enter current password"
-              value={changeData.currentPassword}
-              onChange={handleChangeData}
-              InputLabelProps={{ shrink: true }}
-              slotProps={getPasswordFieldSlots(
-                showCurrentPassword,
-                () => setShowCurrentPassword((prev) => !prev)
-              )}
-            />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="New Password"
-              name="newPassword"
-              type={showNewPassword ? "text" : "password"}
-              placeholder="Enter new password"
-              value={changeData.newPassword}
-              onChange={handleChangeData}
-              InputLabelProps={{ shrink: true }}
-              slotProps={getPasswordFieldSlots(
-                showNewPassword,
-                () => setShowNewPassword((prev) => !prev)
-              )}
-            />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Confirm New Password"
-              name="confirmNewPassword"
-              type={showConfirmNewPassword ? "text" : "password"}
-              placeholder="Confirm new password"
-              value={changeData.confirmNewPassword}
-              onChange={handleChangeData}
-              InputLabelProps={{ shrink: true }}
-              slotProps={getPasswordFieldSlots(
-                showConfirmNewPassword,
-                () => setShowConfirmNewPassword((prev) => !prev)
-              )}
-            />
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ mt: 2, py: 1.6, fontWeight: 600 }}
-              onClick={handleChangePassword}
-            >
-              Update Password
-            </Button>
-          </Box>
-        )}
+        
       </Paper>
+      <Dialog
+open={openChangePassword}
+onClose={() => setOpenChangePassword(false)}
+maxWidth="xs"
+fullWidth
+TransitionComponent={Fade}
+PaperProps={{
+sx:{
+borderRadius:4
+}
+}}
+>
+
+<DialogTitle>
+
+<Box
+display="flex"
+justifyContent="space-between"
+alignItems="center"
+>
+
+<Typography
+fontWeight={700}
+fontSize={22}
+>
+
+Change Password
+
+</Typography>
+
+<IconButton
+onClick={() =>
+setOpenChangePassword(false)
+}
+>
+
+<CloseIcon/>
+
+</IconButton>
+
+</Box>
+
+</DialogTitle>
+
+<Divider/>
+
+<DialogContent>
+
+<TextField
+fullWidth
+margin="normal"
+label="Current Password"
+name="currentPassword"
+type={
+showCurrentPassword
+? "text"
+: "password"
+}
+value={changeData.currentPassword}
+onChange={handleChangeData}
+slotProps={getPasswordFieldSlots(
+showCurrentPassword,
+()=>setShowCurrentPassword(prev=>!prev)
+)}
+/>
+
+<TextField
+fullWidth
+margin="normal"
+label="New Password"
+name="newPassword"
+type={
+showNewPassword
+? "text"
+: "password"
+}
+value={changeData.newPassword}
+onChange={handleChangeData}
+slotProps={getPasswordFieldSlots(
+showNewPassword,
+()=>setShowNewPassword(prev=>!prev)
+)}
+/>
+
+<TextField
+fullWidth
+margin="normal"
+label="Confirm Password"
+name="confirmNewPassword"
+type={
+showConfirmNewPassword
+? "text"
+: "password"
+}
+value={changeData.confirmNewPassword}
+onChange={handleChangeData}
+slotProps={getPasswordFieldSlots(
+showConfirmNewPassword,
+()=>setShowConfirmNewPassword(prev=>!prev)
+)}
+/>
+
+</DialogContent>
+
+<DialogActions
+sx={{
+p:3
+}}
+>
+
+<Button
+onClick={() =>
+setOpenChangePassword(false)
+}
+>
+
+Cancel
+
+</Button>
+
+<Button
+variant="contained"
+onClick={handleChangePassword}
+>
+
+Update Password
+
+</Button>
+
+</DialogActions>
+
+</Dialog>
     </Box>
   );
 }
