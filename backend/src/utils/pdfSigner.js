@@ -60,29 +60,36 @@ const getLayoutMetrics = (
 ) => {
     const fieldCount = Math.max(orderedFields.length, 1);
     const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
-    const fieldCount = Math.max(orderedFields.length, 1);
-const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
 
-const maxColumns = Math.min(
-    3,
-    Math.max(1, approvalRows.length)
-);
-
-const availableHeight = Math.max(80, boxHeight - 34);
-
-const columnCount = maxColumns;
     const maxColumns = Math.min(
-    3,
-    Math.max(1, approvalRows.length)
-);
+        3,
+        Math.max(1, approvalRows.length)
+    );
 
-const availableHeight = Math.max(80, boxHeight - 34);
+    const availableHeight = Math.max(80, boxHeight - 34);
 
-const columnCount = maxColumns;
-    const rowCount = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / columnCount));
+    const columnCount = maxColumns;
+
+    const rowCount = Math.max(
+        1,
+        Math.ceil(
+            Math.max(approvalRows.length, 1) / columnCount
+        )
+    );
+
     const rowHeight = availableHeight / rowCount;
-    const textSize = approvalRows.length >= 6 ? 7 : approvalRows.length >= 4 ? 8 : 9;
-    const signatureHeight = Math.max(18, Math.min(34, rowHeight * 0.34));
+
+    const textSize =
+        approvalRows.length >= 6
+            ? 7
+            : approvalRows.length >= 4
+                ? 8
+                : 9;
+
+    const signatureHeight = Math.max(
+        18,
+        Math.min(34, rowHeight * 0.34)
+    );
 
     return {
         columnCount,
@@ -92,7 +99,6 @@ const columnCount = maxColumns;
         signatureHeight,
     };
 };
-
 const signPdf = async (
     pdfPath,
     approvalEntries,
