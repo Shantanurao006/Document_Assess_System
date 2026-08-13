@@ -102,7 +102,8 @@ const getLayoutMetrics = (
 const signPdf = async (
     pdfPath,
     approvalEntries,
-    approvalBoxLayout
+    approvalBoxLayout,
+    approvalPositions = []
 ) => {
 
         // Determine output signed path (preserve case-insensitive .pdf)
@@ -180,9 +181,7 @@ const cardWidth = Math.max(
     } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields, cardWidth, columnGap);
     // Professional spacing between approvers
     // Fixed-size approval cards for a clean professional layout
-    const signatureWidth = Math.min(90, cardWidth);
-
-    const contentTop = boxBottom + boxHeight - paddingY;
+const contentTop = boxBottom + boxHeight - paddingY;
 
     // Center the approval cards inside the approval box
 const contentLeft = boxX + paddingX;
@@ -210,14 +209,24 @@ const fieldSpacing = Math.max(
         const entryFields = entry.status === "Rejected"
             ? REJECTED_APPROVAL_FIELDS
             : orderedFields;
+        const position = approvalPositions[entryIndex];
+        const signatureWidth = position
+        ? position.width * width
+        : Math.min(90, cardWidth);
+
         const columnIndex = entryIndex % columnCount;
         const rowIndex = Math.floor(entryIndex / columnCount);
-        const columnLeft =
-    boxX +
-    paddingX +
-    (columnIndex * (cardWidth + columnGap));
-        const rowTop = contentTop - (rowIndex * rowHeight);
-        const signatureY = rowTop - signatureHeight;
+
+        const columnLeft = position
+            ? position.x * width
+            : boxX +
+            paddingX +
+            (columnIndex * (cardWidth + columnGap));
+
+        const signatureY = position
+            ? height - (position.y * height) - (position.height * height)
+            : (contentTop - (rowIndex * rowHeight) - signatureHeight);
+
         const detailsTopY = signatureY - 16;
 
         if (entry.status !== "Rejected" && entry.signaturePath && fs.existsSync(entry.signaturePath)) {
@@ -229,8 +238,8 @@ const fieldSpacing = Math.max(
             page.drawImage(signatureImage, {
                 x: columnLeft,
                 y: signatureY,
-                width: signatureWidth,
-                height: signatureHeight,
+                width: position ? position.width * width : signatureWidth,
+                height: position ? position.height * height : signatureHeight,
             });
         }
 

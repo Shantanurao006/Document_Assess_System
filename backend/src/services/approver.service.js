@@ -107,6 +107,7 @@ const admin = adminResult.rows[0];
     const result = await pool.query(
         `
         SELECT
+            document_id,
             stored_file_name,
             approval_group_id,
             approval_box_config,
@@ -256,10 +257,28 @@ const approvalEntries = approvalHistoryResult.rows
     }))
     .filter((entry) => entry.approvedOn);
 
+const approvalPositionResult = await pool.query(
+    `
+    SELECT
+        page_number,
+        x,
+        y,
+        width,
+        height
+    FROM document_approval_positions
+    WHERE document_id = $1
+    ORDER BY id ASC
+    `,
+    [assignment.document_id]
+);
+
+const approvalPositions = approvalPositionResult.rows;
+
 const signedPdfPath = await signPdf(
     originalPdfPath,
     approvalEntries,
-    approvalBoxLayout
+    approvalBoxLayout,
+    approvalPositions
 );
 
     // Update DB
