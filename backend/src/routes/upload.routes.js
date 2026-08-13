@@ -72,9 +72,6 @@ router.post("/upload", upload.array("documents"), async (req, res) => {
 
 const { uploadedBy } = req.body;
 
-
-const { uploadedBy } = req.body;
-
 const approvalPositionValues = Array.isArray(req.body.approvalPositions)
     ? req.body.approvalPositions
     : [req.body.approvalPositions];
