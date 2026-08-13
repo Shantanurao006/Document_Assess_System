@@ -38,12 +38,7 @@ FROM document_assignments da
             INNER JOIN users u
                 ON da.uploaded_by = u.id
             LEFT JOIN document_notes dn
-            ON dn.document_id = (
-                SELECT d.id
-                FROM documents d
-                WHERE d.stored_name = da.stored_file_name
-                LIMIT 1
-            )
+                ON dn.document_id = da.document_id
             LEFT JOIN LATERAL (
                 SELECT grouped_da.signed_pdf_name
                 FROM document_assignments grouped_da

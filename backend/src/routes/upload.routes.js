@@ -260,19 +260,20 @@ for (let approvalIndex = 0; approvalIndex < approversByFile[i].length; approvalI
 
         await pool.query(
             `
-            INSERT INTO document_assignments
-            (
-                original_file_name,
-                stored_file_name,
-                uploaded_by,
-                assigned_to,
-                approval_group_id,
-                approval_box_config,
-                approval_order,
-                status
-            )
-            VALUES
-            ($1,$2,$3,$4,$5,$6,$7,$8)
+           INSERT INTO document_assignments
+(
+    document_id,
+    original_file_name,
+    stored_file_name,
+    uploaded_by,
+    assigned_to,
+    approval_group_id,
+    approval_box_config,
+    approval_order,
+    status
+)
+VALUES
+($1,$2,$3,$4,$5,$6,$7,$8,$9)
             `,
             [
                 file.originalname,
