@@ -181,31 +181,29 @@ const updatePreviewDims = useCallback(() => {
       }
 
       if (targetIndex !== -1) {
-        const container = previewRefs.current[targetIndex];
+const container = previewRefs.current[targetIndex];
 const pageElement = getPreviewPageElement(container);
 
-const containerRect = container.getBoundingClientRect();
 const pageRect = pageElement.getBoundingClientRect();
-
 
 const nextX = Math.min(
     Math.max(
         event.clientX -
-        containerRect.left -
+        pageRect.left -
         statusSize.width / 2,
         12
     ),
-    Math.max(containerRect.width - statusSize.width - 12, 12)
+    Math.max(pageRect.width - statusSize.width - 12, 12)
 );
 
 const nextY = Math.min(
     Math.max(
         event.clientY -
-        containerRect.top -
+        pageRect.top -
         statusSize.height / 2,
         12
     ),
-    Math.max(containerRect.height - statusSize.height - 12, 12)
+    Math.max(pageRect.height - statusSize.height - 12, 12)
 );
         setStatusPlacement({ x: nextX, y: nextY });
         setDraggingDocIndex(targetIndex);
