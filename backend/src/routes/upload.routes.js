@@ -163,15 +163,67 @@ for (let i = 0; i < req.files.length; i++) {
 
     const approvalGroupId = `${Date.now()}-${i}-${file.filename}`;
 
-    const uploadedByUser = await pool.query(
-        "SELECT id FROM users WHERE email=$1",
-        [uploadedBy]
-    );
-    if (uploadedByUser.rows.length === 0) {
-        throw new Error("Uploaded user not found.");
-    }
+ const uploadedByUser = await pool.query(
+    "SELECT id FROM users WHERE email=$1",
+    [uploadedBy]
+);
+if (uploadedByUser.rows.length === 0) {
+    throw new Error("Uploaded user not found.");
+}
 
-    for (let approvalIndex = 0; approvalIndex < approversByFile[i].length; approvalIndex++) {
+const documentResult = await pool.query(
+    `
+    INSERT INTO documents
+    (
+        user_id,
+        original_name,
+        stored_name,
+        file_path,
+        status,
+        uploaded_at
+    )
+    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+    RETURNING id
+    `,
+    [
+        uploadedByUser.rows[0].id,
+        file.originalname,
+        file.filename,
+        file.path,
+        "Pending",
+    ]
+);
+
+const documentId = documentResult.rows[0].id;
+
+const positions = approvalPositionsByFile[i] || [];
+
+for (const position of positions) {
+    await pool.query(
+        `
+        INSERT INTO document_approval_positions
+        (
+            document_id,
+            page_number,
+            x,
+            y,
+            width,
+            height
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+            documentId,
+            position.pageNumber || 1,
+            position.x,
+            position.y,
+            position.width,
+            position.height,
+        ]
+    );
+}
+
+for (let approvalIndex = 0; approvalIndex < approversByFile[i].length; approvalIndex++) {
         const approverEmail = approversByFile[i][approvalIndex];
         const approverUser = await pool.query(
             "SELECT id FROM users WHERE email=$1",
