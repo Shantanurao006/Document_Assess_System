@@ -60,14 +60,25 @@ const getLayoutMetrics = (
 ) => {
     const fieldCount = Math.max(orderedFields.length, 1);
     const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
-    const usableWidth = Math.max(boxWidth - 28, cardWidth);
-    const fitColumns = Math.max(
-        1,
-        Math.floor((usableWidth + columnGap) / (cardWidth + columnGap))
-    );
-    const maxColumns = Math.min(3, fitColumns, Math.max(1, approvalRows.length));
-    const availableHeight = Math.max(80, boxHeight - 34);
-    const columnCount = Math.max(1, Math.min(maxColumns, Math.max(1, approvalRows.length)));
+    const fieldCount = Math.max(orderedFields.length, 1);
+const rowContentHeight = Math.max(104, 36 + (fieldCount * 16));
+
+const maxColumns = Math.min(
+    3,
+    Math.max(1, approvalRows.length)
+);
+
+const availableHeight = Math.max(80, boxHeight - 34);
+
+const columnCount = maxColumns;
+    const maxColumns = Math.min(
+    3,
+    Math.max(1, approvalRows.length)
+);
+
+const availableHeight = Math.max(80, boxHeight - 34);
+
+const columnCount = maxColumns;
     const rowCount = Math.max(1, Math.ceil(Math.max(approvalRows.length, 1) / columnCount));
     const rowHeight = availableHeight / rowCount;
     const textSize = approvalRows.length >= 6 ? 7 : approvalRows.length >= 4 ? 8 : 9;
@@ -142,8 +153,13 @@ const signPdf = async (
     const orderedFields = DISPLAY_APPROVAL_FIELDS.filter((fieldLabel) =>
         configuredFields.includes(fieldLabel)
     );
-    const cardWidth = Math.min(250, boxWidth - (paddingX * 2));
     const columnGap = 20;
+const desiredColumns = Math.min(3, Math.max(1, approvalRows.length));
+const cardWidth = Math.max(
+    80,
+    (boxWidth - (paddingX * 2) - ((desiredColumns - 1) * columnGap)) /
+        desiredColumns
+);
     const {
         columnCount,
         rowCount,
@@ -153,19 +169,22 @@ const signPdf = async (
     } = getLayoutMetrics(approvalRows, boxWidth, boxHeight, orderedFields, cardWidth, columnGap);
     // Professional spacing between approvers
     // Fixed-size approval cards for a clean professional layout
-    const signatureWidth = 90;
+    const signatureWidth = Math.min(90, cardWidth);
 
-    const contentTop = boxBottom + boxHeight - paddingY;
+    const contentTop = boxBottom + boxHeight - paddingY - signatureHeight;
 
     // Center the approval cards inside the approval box
-    const totalCardsWidth =
-        (columnCount * cardWidth) +
-        ((columnCount - 1) * columnGap);
-
-    const contentLeft = boxX + paddingX;
-    const fieldCount = Math.max(orderedFields.length, 1);
-    const fieldSpacing = Math.max(11, Math.min(16, Math.floor((rowHeight - signatureHeight - 20) / fieldCount)));
-
+const contentLeft = boxX + paddingX;
+const fieldCount = Math.max(orderedFields.length, 1);
+const fieldSpacing = Math.max(
+    11,
+    Math.min(
+        16,
+        Math.floor(
+            (rowHeight - signatureHeight - paddingY) / fieldCount
+        )
+    )
+);
     //page.drawRectangle({
       //  x: boxX,
         //y: boxBottom,
@@ -182,7 +201,10 @@ const signPdf = async (
             : orderedFields;
         const columnIndex = entryIndex % columnCount;
         const rowIndex = Math.floor(entryIndex / columnCount);
-        const columnLeft = contentLeft + (columnIndex * (cardWidth + columnGap));
+        const columnLeft =
+    boxX +
+    paddingX +
+    (columnIndex * (cardWidth + columnGap));
         const rowTop = contentTop - (rowIndex * rowHeight);
         const signatureY = rowTop - signatureHeight;
         const detailsTopY = signatureY - 16;
