@@ -22,20 +22,28 @@ router.get("/documents/:adminId", async (req, res) => {
         const result = await pool.query(
             `
             SELECT
-                da.id,
-                da.original_file_name,
-                da.stored_file_name,
-                latest_signed.signed_pdf_name,
-                da.approval_box_config,
-                da.assigned_datetime,
-                da.status,
-                da.approval_order,
-                approval_stats.total_approvers,
-                approval_stats.completed_approvals,
-                u.email AS uploaded_by_email
-            FROM document_assignments da
+    da.id,
+    da.original_file_name,
+    da.stored_file_name,
+    latest_signed.signed_pdf_name,
+    da.approval_box_config,
+    da.assigned_datetime,
+    da.status,
+    da.approval_order,
+    approval_stats.total_approvers,
+    approval_stats.completed_approvals,
+    u.email AS uploaded_by_email,
+    dn.note AS document_note
+FROM document_assignments da
             INNER JOIN users u
                 ON da.uploaded_by = u.id
+            LEFT JOIN document_notes dn
+            ON dn.document_id = (
+                SELECT d.id
+                FROM documents d
+                WHERE d.stored_name = da.stored_file_name
+                LIMIT 1
+            )
             LEFT JOIN LATERAL (
                 SELECT grouped_da.signed_pdf_name
                 FROM document_assignments grouped_da

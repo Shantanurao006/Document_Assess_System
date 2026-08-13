@@ -407,9 +407,29 @@ function AdminDashboard() {
               <Typography variant="body2" fontWeight="bold">
                 Approval step: {selectedDocument.approval_order} of {selectedDocument.total_approvers}
               </Typography>
+
               <Typography variant="body2" color="text.secondary">
                 Completed approvals before this step: {selectedDocument.completed_approvals}
               </Typography>
+
+              {selectedDocument.document_note && (
+                <Box sx={{ mt: 1.5 }}>
+                  <Typography variant="body2" fontWeight="bold">
+                    Document Details
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      mt: 0.5,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {selectedDocument.document_note}
+                  </Typography>
+                </Box>
+              )}
             </Stack>
           )}
 
