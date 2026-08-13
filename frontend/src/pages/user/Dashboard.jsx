@@ -522,7 +522,34 @@ const nextY = Math.min(
         }
       }
 
-      const response = await uploadDocuments(documents, user.email, previewRefs.current);
+      const approvalPositions = documents.map((document, documentIndex) => {
+  const pageElement = getPreviewPageElement(
+    previewRefs.current[documentIndex]
+  );
+
+  const pageRect = pageElement?.getBoundingClientRect();
+
+  if (!pageRect) {
+    return [];
+  }
+
+  return (document.annotations || [])
+    .filter((annotation) => annotation.type === "status")
+    .map((annotation) => ({
+      pageNumber: 1,
+      x: annotation.x / pageRect.width,
+      y: annotation.y / pageRect.height,
+      width: annotation.width / pageRect.width,
+      height: annotation.height / pageRect.height,
+    }));
+});
+
+const response = await uploadDocuments(
+  documents,
+  user.email,
+  previewRefs.current,
+  approvalPositions
+);
       alert(response.message);
 
       setDocuments([{ file: null, previewUrl: "", approvers: [{ email: "" }], annotations: [] }]);

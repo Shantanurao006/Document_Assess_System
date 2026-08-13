@@ -3,7 +3,8 @@ import API from "./api";
 export const uploadDocuments = async (
     documents,
     uploadedBy,
-    previewElements = []
+    previewElements = [],
+    approvalPositions = []
 ) => {
 
     const formData = new FormData();
@@ -52,9 +53,14 @@ export const uploadDocuments = async (
             JSON.stringify(approverEmails)
         );
         formData.append(
-            "approvalBoxConfig",
-            JSON.stringify(approvalBoxConfig)
-        );
+    "approvalBoxConfig",
+    JSON.stringify(approvalBoxConfig)
+);
+
+formData.append(
+    "approvalPositions",
+    JSON.stringify(approvalPositions[index] || [])
+);
     });
 
     const response = await API.post(

@@ -72,6 +72,11 @@ router.post("/upload", upload.array("documents"), async (req, res) => {
 
 const { uploadedBy } = req.body;
 
+
+const approvalPositionValues = Array.isArray(req.body.approvalPositions)
+    ? req.body.approvalPositions
+    : [req.body.approvalPositions];
+
 const approverEmailValues = Array.isArray(req.body.approverEmails)
     ? req.body.approverEmails
     : [req.body.approverEmails];
@@ -87,6 +92,16 @@ const approversByFile = approverEmailValues.map((value) => {
         return [value];
     }
 });
+
+const approvalPositionsByFile = approvalPositionValues.map((value) => {
+    try {
+        const parsedValue = JSON.parse(value);
+        return Array.isArray(parsedValue) ? parsedValue : [];
+    } catch {
+        return [];
+    }
+});
+
 const approvalBoxesByFile = approvalBoxConfigValues.map((value) => {
     try {
         const parsedValue = JSON.parse(value);
@@ -107,6 +122,13 @@ if (approvalBoxesByFile.length !== req.files.length) {
     return res.status(400).json({
         success: false,
         message: "Each uploaded file must include its approval box layout.",
+    });
+}
+
+if (approvalPositionValues.length !== req.files.length) {
+    return res.status(400).json({
+        success: false,
+        message: "Each uploaded file must include its approval position.",
     });
 }
 
