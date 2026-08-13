@@ -261,30 +261,31 @@ for (let approvalIndex = 0; approvalIndex < approversByFile[i].length; approvalI
         await pool.query(
             `
            INSERT INTO document_assignments
-(
-    document_id,
-    original_file_name,
-    stored_file_name,
-    uploaded_by,
-    assigned_to,
-    approval_group_id,
-    approval_box_config,
-    approval_order,
-    status
-)
-VALUES
-($1,$2,$3,$4,$5,$6,$7,$8,$9)
+            (
+                document_id,
+                original_file_name,
+                stored_file_name,
+                uploaded_by,
+                assigned_to,
+                approval_group_id,
+                approval_box_config,
+                approval_order,
+                status
+            )
+            VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             `,
             [
-                file.originalname,
-                file.filename,
-                uploadedByUser.rows[0].id,
-                approverUser.rows[0].id,
-                approvalGroupId,
-                JSON.stringify(approvalBoxesByFile[i]),
-                approvalIndex + 1,
-                "Pending",
-            ]
+    documentId,
+    file.originalname,
+    file.filename,
+    uploadedByUser.rows[0].id,
+    approverUser.rows[0].id,
+    approvalGroupId,
+    JSON.stringify(approvalBoxesByFile[i]),
+    approvalIndex + 1,
+    "Pending",
+]
         );
     }
 }
