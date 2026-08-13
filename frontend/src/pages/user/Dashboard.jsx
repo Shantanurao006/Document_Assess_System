@@ -37,14 +37,15 @@ function UserDashboard() {
   const navigate = useNavigate();
   const user = getStoredUser();
 
-  const [documents, setDocuments] = useState([
-    {
-      file: null,
-      previewUrl: "",
-      approvers: [{ email: "" }],
-      annotations: [],
-    },
-  ]);
+const [documents, setDocuments] = useState([
+  {
+    file: null,
+    previewUrl: "",
+    approvers: [{ email: "" }],
+    annotations: [],
+    note: "",
+  },
+]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragGhostPosition, setDragGhostPosition] = useState({ x: 0, y: 0 });
@@ -309,17 +310,17 @@ const nextY = Math.min(
   };
 
   const handleAddFile = () => {
-    setDocuments([
-      ...documents,
-      {
-        file: null,
-        previewUrl: "",
-        approvers: [{ email: "" }],
-        annotations: [],
-      },
-    ]);
-  };
-
+  setDocuments([
+    ...documents,
+    {
+      file: null,
+      previewUrl: "",
+      approvers: [{ email: "" }],
+      annotations: [],
+      note: "",
+    },
+  ]);
+};
   const handleRemoveFile = (index) => {
     const updatedDocuments = documents.filter((_, i) => i !== index);
 
@@ -328,7 +329,13 @@ const nextY = Math.min(
     }
 
     if (updatedDocuments.length === 0) {
-      updatedDocuments.push({ file: null, previewUrl: "", approvers: [{ email: "" }], annotations: [] });
+      updatedDocuments.push({
+  file: null,
+  previewUrl: "",
+  approvers: [{ email: "" }],
+  annotations: [],
+  note: "",
+});
     }
 
     setDocuments(updatedDocuments);
@@ -507,6 +514,11 @@ const nextY = Math.min(
           return;
         }
 
+        if (!document.note || document.note.trim().length < 10) {
+          alert(`Please enter at least 10 characters in the document note for Document ${i + 1}.`);
+          return;
+        }
+
         if (emails.length === 0) {
           alert(`Please enter at least one approver email for Document ${i + 1}.`);
           return;
@@ -544,15 +556,26 @@ const nextY = Math.min(
     }));
 });
 
+const documentNotes = documents.map((document) => document.note.trim());
+
 const response = await uploadDocuments(
   documents,
   user.email,
   previewRefs.current,
-  approvalPositions
+  approvalPositions,
+  documentNotes
 );
       alert(response.message);
 
-      setDocuments([{ file: null, previewUrl: "", approvers: [{ email: "" }], annotations: [] }]);
+      setDocuments([
+  {
+    file: null,
+    previewUrl: "",
+    approvers: [{ email: "" }],
+    annotations: [],
+    note: "",
+  },
+]);
     } catch (error) {
       alert(error.response?.data?.message || "Validation failed.");
     } finally {
@@ -645,6 +668,7 @@ const response = await uploadDocuments(
                             : "Choose a file to attach to this document."}
                         </Typography>
                         {document.file && (
+                        <>
                           <Typography
                             variant="body2"
                             sx={{
@@ -657,7 +681,33 @@ const response = await uploadDocuments(
                               ? "Approval box placed"
                               : "Place the approval box on this document before upload"}
                           </Typography>
-                        )}
+
+                          <TextField
+                            fullWidth
+                            multiline
+                            minRows={4}
+                            maxRows={8}
+                            label="Document Note"
+                            placeholder="Enter notes related to this document (minimum 10 characters)"
+                            value={document.note || ""}
+                            onChange={(event) => {
+                              const updatedDocuments = [...documents];
+                              updatedDocuments[documentIndex] = {
+                                ...updatedDocuments[documentIndex],
+                                note: event.target.value,
+                              };
+                              setDocuments(updatedDocuments);
+                            }}
+                            error={Boolean(document.note && document.note.trim().length < 10)}
+                            helperText={
+                              document.note && document.note.trim().length < 10
+                                ? `Minimum 10 characters required (${document.note.trim().length}/10)`
+                                : `${(document.note || "").trim().length} characters`
+                            }
+                            sx={{ mt: 1.5 }}
+                          />
+                        </>
+                      )}
                       </Box>
 
                       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>

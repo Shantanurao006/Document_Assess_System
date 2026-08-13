@@ -1,10 +1,11 @@
 import API from "./api";
 
 export const uploadDocuments = async (
-    documents,
-    uploadedBy,
-    previewElements = [],
-    approvalPositions = []
+  documents,
+  uploadedBy,
+  previewRefs,
+  approvalPositions,
+  documentNotes
 ) => {
 
     const formData = new FormData();
@@ -60,6 +61,11 @@ export const uploadDocuments = async (
 formData.append(
     "approvalPositions",
     JSON.stringify(approvalPositions[index] || [])
+);
+
+formData.append(
+  "documentNotes",
+  documentNotes[index] || ""
 );
     });
 

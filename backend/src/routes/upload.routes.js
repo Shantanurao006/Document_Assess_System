@@ -73,9 +73,15 @@ router.post("/upload", upload.array("documents"), async (req, res) => {
 const { uploadedBy } = req.body;
 
 
+const { uploadedBy } = req.body;
+
 const approvalPositionValues = Array.isArray(req.body.approvalPositions)
     ? req.body.approvalPositions
     : [req.body.approvalPositions];
+
+const documentNoteValues = Array.isArray(req.body.documentNotes)
+    ? req.body.documentNotes
+    : [req.body.documentNotes];
 
 const approverEmailValues = Array.isArray(req.body.approverEmails)
     ? req.body.approverEmails
@@ -100,6 +106,10 @@ const approvalPositionsByFile = approvalPositionValues.map((value) => {
     } catch {
         return [];
     }
+});
+
+const documentNotesByFile = documentNoteValues.map((value) => {
+    return typeof value === "string" ? value.trim() : "";
 });
 
 const approvalBoxesByFile = approvalBoxConfigValues.map((value) => {
@@ -195,6 +205,23 @@ const documentResult = await pool.query(
 );
 
 const documentId = documentResult.rows[0].id;
+
+const documentNote = documentNotesByFile[i] || "";
+
+await pool.query(
+    `
+    INSERT INTO document_notes
+    (
+        document_id,
+        note
+    )
+    VALUES ($1, $2)
+    `,
+    [
+        documentId,
+        documentNote,
+    ]
+);
 
 const positions = approvalPositionsByFile[i] || [];
 
