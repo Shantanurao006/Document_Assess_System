@@ -126,11 +126,12 @@ const signPdf = async (
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    const boxX = clamp(
-        approvalBoxLayout.xRatio != null ? Math.round(approvalBoxLayout.xRatio * width) : approvalBoxLayout.x,
-        12,
-        Math.max(12, width - 180 - 12)
-    );
+    const boxX = Math.max(
+    12,
+    approvalBoxLayout.xRatio != null
+        ? Math.round(approvalBoxLayout.xRatio * width)
+        : approvalBoxLayout.x
+);
 
     const boxWidth = clamp(
         approvalBoxLayout.widthRatio != null ? Math.round(approvalBoxLayout.widthRatio * width) : approvalBoxLayout.width,
@@ -149,7 +150,11 @@ const signPdf = async (
         ? Math.round(approvalBoxLayout.yRatio * height)
         : approvalBoxLayout.y;
 
-    const boxBottom = height - boxYFromTop - boxHeight;
+    const boxBottom = clamp(
+    height - boxYFromTop - boxHeight,
+    12,
+    Math.max(12, height - boxHeight - 12)
+);
     const paddingX = 14;
     const paddingY = 12;
     const approvalRows = approvalEntries.length > 0 ? approvalEntries : [];
@@ -177,7 +182,7 @@ const cardWidth = Math.max(
     // Fixed-size approval cards for a clean professional layout
     const signatureWidth = Math.min(90, cardWidth);
 
-    const contentTop = boxBottom + boxHeight - paddingY - signatureHeight;
+    const contentTop = boxBottom + boxHeight - paddingY;
 
     // Center the approval cards inside the approval box
 const contentLeft = boxX + paddingX;
@@ -230,32 +235,41 @@ const fieldSpacing = Math.max(
         }
 
         entryFields.forEach((fieldLabel, fieldIndex) => {
-            const fieldY = detailsTopY - (fieldIndex * fieldSpacing);
-            let value = formatApprovalFieldValue(fieldLabel, entry);
+    const fieldY = Math.max(
+        boxBottom + paddingY,
+        detailsTopY - (fieldIndex * fieldSpacing)
+    );
 
-            page.drawText(`${fieldLabel} :`, {
-    x: columnLeft,
-    y: fieldY,
-    size: textSize,
-    font,
-    color: rgb(0,0,0),
-});
+    const value = formatApprovalFieldValue(fieldLabel, entry);
 
-page.drawText(value, {
-    x: columnLeft + 78,
-    y: fieldY,
-    size: textSize,
-    font:
-        fieldLabel === "Status"
-            ? boldFont
-            : font,
-    color:
-        fieldLabel === "Status" &&
-        value === "Rejected"
-            ? rgb(0.85, 0, 0)
-            : rgb(0, 0, 0),
-});
+    if (fieldLabel === "Approved On") {
+        page.drawText(value, {
+            x: columnLeft,
+            y: fieldY,
+            size: textSize,
+            font,
+            color: rgb(0, 0, 0),
+        });
+    } else {
+        page.drawText(`${fieldLabel} :`, {
+            x: columnLeft,
+            y: fieldY,
+            size: textSize,
+            font,
+            color: rgb(0, 0, 0),
+        });
 
+        page.drawText(value, {
+            x: columnLeft + 78,
+            y: fieldY,
+            size: textSize,
+            font: fieldLabel === "Status" ? boldFont : font,
+            color:
+                fieldLabel === "Status" && value === "Rejected"
+                    ? rgb(0.85, 0, 0)
+                    : rgb(0, 0, 0),
+        });
+    }
 });
     }
 
