@@ -577,8 +577,15 @@ const response = await uploadDocuments(
   },
 ]);
     } catch (error) {
-      alert(error.response?.data?.message || "Validation failed.");
-    } finally {
+  console.error("UPLOAD ERROR:", error);
+  console.error("UPLOAD RESPONSE:", error.response?.data);
+
+  alert(
+    error.response?.data?.message ||
+    error.message ||
+    "Validation failed."
+  );
+} finally {
       setIsSubmitting(false);
     }
   };
