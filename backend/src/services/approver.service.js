@@ -107,7 +107,6 @@ const admin = adminResult.rows[0];
     const result = await pool.query(
         `
         SELECT
-            document_id,
             stored_file_name,
             approval_group_id,
             approval_box_config,
@@ -125,6 +124,22 @@ const admin = adminResult.rows[0];
     }
 
     const assignment = result.rows[0];
+
+    const documentResult = await pool.query(
+        `
+        SELECT id
+        FROM documents
+        WHERE stored_name = $1
+        LIMIT 1
+        `,
+        [assignment.stored_file_name]
+    );
+
+    if (documentResult.rows.length === 0) {
+        throw new Error("Document record not found.");
+    }
+
+    const documentIdForPosition = documentResult.rows[0].id;
 
     if (assignment.assigned_to !== admin.id) {
         throw new Error("This document is not assigned to this approver.");
@@ -269,9 +284,8 @@ const approvalPositionResult = await pool.query(
     WHERE document_id = $1
     ORDER BY id ASC
     `,
-    [assignment.document_id]
+    [documentIdForPosition]
 );
-
 const approvalPositions = approvalPositionResult.rows;
 
 const signedPdfPath = await signPdf(
