@@ -127,8 +127,12 @@ const signPdf = async (
         Math.max(120, height - 12)
     );
 
-    const boxYFromTop = approvalBoxLayout.yRatio != null ? Math.round(approvalBoxLayout.yRatio * height) : approvalBoxLayout.y;
-    const boxBottom = clamp(height - boxYFromTop - boxHeight, 12, Math.max(12, height - boxHeight - 12));
+    const boxYFromTop =
+    approvalBoxLayout.yRatio != null
+        ? Math.round(approvalBoxLayout.yRatio * height)
+        : approvalBoxLayout.y;
+
+    const boxBottom = height - boxYFromTop - boxHeight;
     const paddingX = 14;
     const paddingY = 12;
     const approvalRows = approvalEntries.length > 0 ? approvalEntries : [];
@@ -138,8 +142,8 @@ const signPdf = async (
     const orderedFields = DISPLAY_APPROVAL_FIELDS.filter((fieldLabel) =>
         configuredFields.includes(fieldLabel)
     );
-    const columnGap = 60;
-    const cardWidth = 250;
+    const cardWidth = Math.min(250, boxWidth - (paddingX * 2));
+    const columnGap = 20;
     const {
         columnCount,
         rowCount,
@@ -151,18 +155,14 @@ const signPdf = async (
     // Fixed-size approval cards for a clean professional layout
     const signatureWidth = 90;
 
-    const contentTop = boxBottom + boxHeight - paddingY - 8;
+    const contentTop = boxBottom + boxHeight - paddingY;
 
     // Center the approval cards inside the approval box
     const totalCardsWidth =
         (columnCount * cardWidth) +
         ((columnCount - 1) * columnGap);
 
-    const contentLeft =
-        boxX + Math.max(
-            paddingX,
-            (boxWidth - totalCardsWidth) / 2
-        );
+    const contentLeft = boxX + paddingX;
     const fieldCount = Math.max(orderedFields.length, 1);
     const fieldSpacing = Math.max(11, Math.min(16, Math.floor((rowHeight - signatureHeight - 20) / fieldCount)));
 
@@ -184,7 +184,7 @@ const signPdf = async (
         const rowIndex = Math.floor(entryIndex / columnCount);
         const columnLeft = contentLeft + (columnIndex * (cardWidth + columnGap));
         const rowTop = contentTop - (rowIndex * rowHeight);
-        const signatureY = Math.max(boxBottom + 10, rowTop - signatureHeight);
+        const signatureY = rowTop - signatureHeight;
         const detailsTopY = signatureY - 16;
 
         if (entry.status !== "Rejected" && entry.signaturePath && fs.existsSync(entry.signaturePath)) {
