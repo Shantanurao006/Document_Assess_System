@@ -24,7 +24,7 @@ export const uploadDocuments = async (
         const approverEmails = (document.approvers || []).map(
             (approver) => approver.email
         );
-        const previewElement = previewElements[index] || null;
+        const previewElement = previewRefs[index] || null;
         const previewRect = previewElement ? previewElement.getBoundingClientRect() : null;
         const approvalBoxConfig = (document.annotations || [])
             .filter((annotation) => annotation.type === "status")
