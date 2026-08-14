@@ -3,7 +3,6 @@ import API from "./api";
 export const uploadDocuments = async (
   documents,
   uploadedBy,
-  previewRefs,
   approvalPositions,
   documentNotes
 ) => {
@@ -22,33 +21,27 @@ export const uploadDocuments = async (
         }
 
         const approverEmails = (document.approvers || []).map(
-            (approver) => approver.email
-        );
-        const previewElement = previewRefs[index] || null;
-        const previewRect = previewElement ? previewElement.getBoundingClientRect() : null;
-        const approvalBoxConfig = (document.annotations || [])
-            .filter((annotation) => annotation.type === "status")
-            .map((annotation) => {
-                const ratioConfig = previewRect
-                    ? {
-                          xRatio: annotation.x / previewRect.width,
-                          yRatio: annotation.y / previewRect.height,
-                          widthRatio: annotation.width / previewRect.width,
-                          heightRatio: annotation.height / previewRect.height,
-                      }
-                    : {};
+    (approver) => approver.email
+);
+const approvalBoxConfig = (document.annotations || [])
+    .filter((annotation) => annotation.type === "status")
+    .map((annotation, annotationIndex) => {
+        const position =
+            approvalPositions[index]?.[annotationIndex] || {};
 
-                return {
-                    type: annotation.type,
-                    x: annotation.x,
-                    y: annotation.y,
-                    width: annotation.width,
-                    height: annotation.height,
-                    fields: annotation.fields || [],
-                    ...ratioConfig,
-                };
-            });
-
+        return {
+            type: annotation.type,
+            x: annotation.x,
+            y: annotation.y,
+            width: annotation.width,
+            height: annotation.height,
+            fields: annotation.fields || [],
+            xRatio: position.x,
+            yRatio: position.y,
+            widthRatio: position.width,
+            heightRatio: position.height,
+        };
+    });
         formData.append(
             "approverEmails",
             JSON.stringify(approverEmails)

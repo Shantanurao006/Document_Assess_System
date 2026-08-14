@@ -93,15 +93,18 @@ const updatePreviewDims = useCallback(() => {
     }
 
     const rect = pageElement.getBoundingClientRect();
+const containerRect = container.getBoundingClientRect();
 
-    dims.push({
-      width: rect.width,
-      height: rect.height,
-    });
+dims.push({
+  width: rect.width,
+  height: rect.height,
+  leftOffset: rect.left - containerRect.left,
+  topOffset: rect.top - containerRect.top,
+});
 
-    widths.push(
-      Math.max(container.clientWidth - 8, 640)
-    );
+widths.push(
+  Math.max(container.clientWidth - 8, 640)
+);
   });
 
   setPreviewDims(dims);
@@ -561,7 +564,6 @@ const documentNotes = documents.map((document) => document.note.trim());
 const response = await uploadDocuments(
   documents,
   user.email,
-  previewRefs.current,
   approvalPositions,
   documentNotes
 );
@@ -801,8 +803,14 @@ const response = await uploadDocuments(
                             <Box
                               sx={{
                                 position: "absolute",
-                                top: 0,
-                                left: 0,
+                                top: `${Math.max(
+                                  (previewDims[documentIndex]?.topOffset || 0),
+                                  0
+                                )}px`,
+                                left: `${Math.max(
+                                  (previewDims[documentIndex]?.leftOffset || 0),
+                                  0
+                                )}px`,
                                 zIndex: 2,
                               }}
                             >
