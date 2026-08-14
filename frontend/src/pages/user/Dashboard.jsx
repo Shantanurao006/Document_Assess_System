@@ -665,7 +665,7 @@ const response = await uploadDocuments(
                         mb: 2,
                       }}
                     >
-                      <Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography variant="h6" fontWeight="bold">
                           {document.file ? document.file.name : `Document ${documentIndex + 1}`}
                         </Typography>
