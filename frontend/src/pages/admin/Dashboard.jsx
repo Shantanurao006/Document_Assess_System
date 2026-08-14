@@ -475,9 +475,13 @@ const handleView = (document) => {
               })()}
 
               {Array.isArray(selectedDocument.approval_box_config) &&
-                selectedDocument.approval_box_config.length > 0 &&
-                selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => {
-                  const previewWidth = previewDims.width || 700;
+              selectedDocument.approval_box_config.length > 0 &&
+              selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => {
+                if (approvalBoxIndex !== Number(selectedDocument.approval_order) - 1) {
+                  return null;
+                }
+
+                const previewWidth = previewDims.width || 700;
                   const previewHeight = previewDims.height || 900;
                   const left =
                     approvalBox.xRatio != null
