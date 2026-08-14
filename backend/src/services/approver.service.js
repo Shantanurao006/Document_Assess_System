@@ -107,14 +107,15 @@ const admin = adminResult.rows[0];
     const result = await pool.query(
         `
         SELECT
-            stored_file_name,
-            approval_group_id,
-            approval_box_config,
-            uploaded_by,
-            approval_order,
-            assigned_to
-        FROM document_assignments
-        WHERE id = $1
+    document_id,
+    stored_file_name,
+    approval_group_id,
+    approval_box_config,
+    uploaded_by,
+    approval_order,
+    assigned_to
+FROM document_assignments
+WHERE id = $1
         `,
         [documentId]
     );
@@ -236,13 +237,11 @@ const approvalHistoryResult = await pool.query(
         ON da.assigned_to = approver_user.id
     LEFT JOIN users approved_user
         ON da.approved_by = approved_user.id
-    WHERE da.uploaded_by = $1
-        AND COALESCE(da.approval_group_id, da.stored_file_name) = $2
+    WHERE da.document_id = $1
     ORDER BY da.approval_order ASC
     `,
     [
-        assignment.uploaded_by,
-        getApprovalGroupKey(assignment),
+        assignment.document_id,
     ]
 );
 
