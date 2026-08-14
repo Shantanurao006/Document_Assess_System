@@ -694,6 +694,13 @@ const response = await uploadDocuments(
                             multiline
                             minRows={4}
                             maxRows={8}
+                            slotProps={{
+                              input: {
+                                sx: {
+                                  minHeight: "120px",
+                                },
+                              },
+                            }}
                             label="Document Note"
                             placeholder="Enter notes related to this document (minimum 10 characters)"
                             value={document.note || ""}
@@ -711,7 +718,12 @@ const response = await uploadDocuments(
                                 ? `Minimum 10 characters required (${document.note.trim().length}/10)`
                                 : `${(document.note || "").trim().length} characters`
                             }
-                            sx={{ mt: 1.5 }}
+                            sx={{
+                              mt: 1.5,
+                              "& .MuiInputBase-root": {
+                                minHeight: "120px",
+                              },
+                            }}
                           />
                         </>
                       )}

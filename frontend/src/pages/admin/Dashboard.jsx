@@ -150,10 +150,11 @@ function AdminDashboard() {
 
   };
 
-  const handleView = (document) => {
-    setSelectedDocument(document);
-    setOpenDialog(true);
-  };
+const handleView = (document) => {
+  console.log("SELECTED DOCUMENT:", document);
+  setSelectedDocument(document);
+  setOpenDialog(true);
+};
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
