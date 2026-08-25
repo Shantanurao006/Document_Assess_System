@@ -1,6 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
+const {
+    PDFDocument,
+    rgb,
+    StandardFonts,
+    degrees,
+} = require("pdf-lib");
 const { ensureUploadDirectories, signedDir } = require("../config/uploadPaths");
 
 const DEFAULT_APPROVAL_FIELDS = [
@@ -49,6 +54,59 @@ const formatApprovalFieldValue = (fieldLabel, entry) => {
 };
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const getApprovalDrawTransform = (
+    position,
+    pageWidth,
+    pageHeight,
+    rotation
+) => {
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
+
+    const x = position.x;
+    const y = position.y;
+    const width = position.width;
+    const height = position.height;
+
+    switch (normalizedRotation) {
+        case 90:
+            return {
+                x: pageWidth - (y * pageWidth),
+                y: pageHeight - (x * pageHeight),
+                width: width * pageWidth,
+                height: height * pageHeight,
+                rotate: degrees(-90),
+            };
+
+        case 180:
+            return {
+                x: (1 - x - width) * pageWidth,
+                y: y * pageHeight,
+                width: width * pageWidth,
+                height: height * pageHeight,
+                rotate: degrees(180),
+            };
+
+        case 270:
+            return {
+                x: (1 - y - height) * pageWidth,
+                y: (1 - x - width) * pageHeight,
+                width: width * pageWidth,
+                height: height * pageHeight,
+                rotate: degrees(90),
+            };
+
+        case 0:
+        default:
+            return {
+                x: x * pageWidth,
+                y: (1 - y - height) * pageHeight,
+                width: width * pageWidth,
+                height: height * pageHeight,
+                rotate: degrees(0),
+            };
+    }
+};
 
 const getPdfPositionFromVisualPosition = (
     position,
@@ -263,10 +321,10 @@ const fieldSpacing = Math.max(
         const entryFields = entry.status === "Rejected"
             ? REJECTED_APPROVAL_FIELDS
             : orderedFields;
-        const position = approvalPositions[entryIndex];
+const position = approvalPositions[entryIndex];
 
-const pdfPosition = position
-    ? getPdfPositionFromVisualPosition(
+const approvalTransform = position
+    ? getApprovalDrawTransform(
         position,
         width,
         height,
@@ -274,25 +332,25 @@ const pdfPosition = position
     )
     : null;
 
-const signatureWidth = pdfPosition
-    ? pdfPosition.width
+const signatureWidth = approvalTransform
+    ? approvalTransform.width
     : Math.min(90, cardWidth);
 
-const signatureHeightValue = pdfPosition
-    ? pdfPosition.height
+const signatureHeightValue = approvalTransform
+    ? approvalTransform.height
     : signatureHeight;
 
 const columnIndex = entryIndex % columnCount;
 const rowIndex = Math.floor(entryIndex / columnCount);
 
-const columnLeft = pdfPosition
-    ? pdfPosition.x
+const columnLeft = approvalTransform
+    ? approvalTransform.x
     : boxX +
     paddingX +
     (columnIndex * (cardWidth + columnGap));
 
-const signatureY = pdfPosition
-    ? pdfPosition.y
+const signatureY = approvalTransform
+    ? approvalTransform.y
     : (contentTop - (rowIndex * rowHeight) - signatureHeight);
 
         const detailsTopY = signatureY - 16;
@@ -308,6 +366,9 @@ const signatureY = pdfPosition
                 y: signatureY,
                 width: signatureWidth,
                 height: signatureHeightValue,
+                rotate: approvalTransform
+                    ? approvalTransform.rotate
+                    : degrees(0),
             });
         }
 
