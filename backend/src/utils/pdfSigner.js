@@ -63,46 +63,46 @@ const getApprovalDrawTransform = (
 ) => {
     const normalizedRotation = ((rotation % 360) + 360) % 360;
 
-    const x = position.x;
-    const y = position.y;
-    const width = position.width;
-    const height = position.height;
+    const visualX = position.x;
+    const visualY = position.y;
+    const visualWidth = position.width;
+    const visualHeight = position.height;
 
     switch (normalizedRotation) {
         case 90:
             return {
-                x: pageWidth - (y * pageWidth),
-                y: pageHeight - (x * pageHeight),
-                width: width * pageWidth,
-                height: height * pageHeight,
+                x: visualY * pageWidth,
+                y: (visualX + visualWidth) * pageHeight,
+                width: visualWidth * pageHeight,
+                height: visualHeight * pageWidth,
                 rotate: degrees(-90),
             };
 
         case 180:
             return {
-                x: (1 - x - width) * pageWidth,
-                y: y * pageHeight,
-                width: width * pageWidth,
-                height: height * pageHeight,
+                x: (1 - visualX) * pageWidth,
+                y: (visualY + visualHeight) * pageHeight,
+                width: visualWidth * pageWidth,
+                height: visualHeight * pageHeight,
                 rotate: degrees(180),
             };
 
         case 270:
             return {
-                x: (1 - y - height) * pageWidth,
-                y: (1 - x - width) * pageHeight,
-                width: width * pageWidth,
-                height: height * pageHeight,
+                x: (1 - visualY) * pageWidth,
+                y: (1 - visualX - visualWidth) * pageHeight,
+                width: visualWidth * pageHeight,
+                height: visualHeight * pageWidth,
                 rotate: degrees(90),
             };
 
         case 0:
         default:
             return {
-                x: x * pageWidth,
-                y: (1 - y - height) * pageHeight,
-                width: width * pageWidth,
-                height: height * pageHeight,
+                x: visualX * pageWidth,
+                y: (1 - visualY - visualHeight) * pageHeight,
+                width: visualWidth * pageWidth,
+                height: visualHeight * pageHeight,
                 rotate: degrees(0),
             };
     }
