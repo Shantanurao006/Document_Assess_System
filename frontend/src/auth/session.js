@@ -1,4 +1,4 @@
-const SESSION_DURATION_MS = 5 * 60 * 1000;
+const SESSION_DURATION_MS = 15 * 60 * 1000;
 const USER_STORAGE_KEY = "user";
 
 export const getStoredUser = () => {
