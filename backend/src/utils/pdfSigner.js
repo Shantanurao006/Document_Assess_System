@@ -1,6 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
+const {
+    PDFDocument,
+    rgb,
+    StandardFonts,
+    degrees,
+} = require("pdf-lib");
 const { ensureUploadDirectories, signedDir } = require("../config/uploadPaths");
 
 const DEFAULT_APPROVAL_FIELDS = [
@@ -72,8 +77,8 @@ const getPdfPositionFromVisualPosition = (
             return {
                 x: y * width,
                 y: x * height,
-                width: boxHeight * width,
-                height: boxWidth * height,
+                width: boxWidth * width,
+                height: boxHeight * height,
             };
 
         case 180:
@@ -88,8 +93,8 @@ const getPdfPositionFromVisualPosition = (
             return {
                 x: (1 - y - boxHeight) * width,
                 y: (1 - x - boxWidth) * height,
-                width: boxHeight * width,
-                height: boxWidth * height,
+                width: boxWidth * width,
+                height: boxHeight * height,
             };
 
         case 0:
@@ -308,6 +313,7 @@ const signatureY = pdfPosition
                 y: signatureY,
                 width: signatureWidth,
                 height: signatureHeightValue,
+                rotate: degrees(-rotation),
             });
         }
 
