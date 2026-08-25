@@ -61,53 +61,56 @@ const getApprovalDrawTransform = (
     pageHeight,
     rotation
 ) => {
+    if (!position) {
+        return null;
+    }
+
     const normalizedRotation = ((rotation % 360) + 360) % 360;
 
-    const visualX = position.x;
-    const visualY = position.y;
-    const visualWidth = position.width;
-    const visualHeight = position.height;
+    const x = position.x;
+    const y = position.y;
+    const width = position.width;
+    const height = position.height;
 
     switch (normalizedRotation) {
         case 90:
             return {
-                x: visualY * pageWidth,
-                y: (visualX + visualWidth) * pageHeight,
-                width: visualWidth * pageHeight,
-                height: visualHeight * pageWidth,
-                rotate: degrees(-90),
+                x: (y + height) * pageWidth,
+                y: x * pageHeight,
+                width: width * pageHeight,
+                height: height * pageWidth,
+                rotate: degrees(90),
             };
 
         case 180:
             return {
-                x: (1 - visualX) * pageWidth,
-                y: (visualY + visualHeight) * pageHeight,
-                width: visualWidth * pageWidth,
-                height: visualHeight * pageHeight,
+                x: (1 - x - width) * pageWidth,
+                y: y * pageHeight,
+                width: width * pageWidth,
+                height: height * pageHeight,
                 rotate: degrees(180),
             };
 
         case 270:
             return {
-                x: (1 - visualY) * pageWidth,
-                y: (1 - visualX - visualWidth) * pageHeight,
-                width: visualWidth * pageHeight,
-                height: visualHeight * pageWidth,
-                rotate: degrees(90),
+                x: (1 - y - height) * pageWidth,
+                y: (1 - x) * pageHeight,
+                width: width * pageHeight,
+                height: height * pageWidth,
+                rotate: degrees(270),
             };
 
         case 0:
         default:
             return {
-                x: visualX * pageWidth,
-                y: (1 - visualY - visualHeight) * pageHeight,
-                width: visualWidth * pageWidth,
-                height: visualHeight * pageHeight,
+                x: x * pageWidth,
+                y: (1 - y - height) * pageHeight,
+                width: width * pageWidth,
+                height: height * pageHeight,
                 rotate: degrees(0),
             };
     }
 };
-
 const getPdfPositionFromVisualPosition = (
     position,
     width,
@@ -381,13 +384,16 @@ const signatureY = approvalTransform
     const value = formatApprovalFieldValue(fieldLabel, entry);
 
     if (fieldLabel === "Approved On") {
-        page.drawText(value, {
-            x: columnLeft,
-            y: fieldY,
-            size: textSize,
-            font,
-            color: rgb(0, 0, 0),
-        });
+    page.drawText(value, {
+        x: columnLeft,
+        y: fieldY,
+        size: textSize,
+        font,
+        color: rgb(0, 0, 0),
+        rotate: approvalTransform
+            ? approvalTransform.rotate
+            : degrees(0),
+    });
     } else {
         page.drawText(`${fieldLabel} :`, {
             x: columnLeft,
