@@ -50,6 +50,59 @@ const formatApprovalFieldValue = (fieldLabel, entry) => {
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+const getPdfPositionFromVisualPosition = (
+    position,
+    width,
+    height,
+    rotation
+) => {
+    if (!position) {
+        return null;
+    }
+
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
+
+    const x = position.x;
+    const y = position.y;
+    const boxWidth = position.width;
+    const boxHeight = position.height;
+
+    switch (normalizedRotation) {
+        case 90:
+            return {
+                x: y * width,
+                y: x * height,
+                width: boxHeight * width,
+                height: boxWidth * height,
+            };
+
+        case 180:
+            return {
+                x: (1 - x - boxWidth) * width,
+                y: y * height,
+                width: boxWidth * width,
+                height: boxHeight * height,
+            };
+
+        case 270:
+            return {
+                x: (1 - y - boxHeight) * width,
+                y: (1 - x - boxWidth) * height,
+                width: boxHeight * width,
+                height: boxWidth * height,
+            };
+
+        case 0:
+        default:
+            return {
+                x: x * width,
+                y: (1 - y - boxHeight) * height,
+                width: boxWidth * width,
+                height: boxHeight * height,
+            };
+    }
+};
+
 const getLayoutMetrics = (
     approvalRows,
     boxWidth,
@@ -123,6 +176,7 @@ const signPdf = async (
     const page = pages[0];
 
     const { width, height } = page.getSize();
+    const rotation = page.getRotation().angle;
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -210,22 +264,36 @@ const fieldSpacing = Math.max(
             ? REJECTED_APPROVAL_FIELDS
             : orderedFields;
         const position = approvalPositions[entryIndex];
-        const signatureWidth = position
-        ? position.width * width
-        : Math.min(90, cardWidth);
 
-        const columnIndex = entryIndex % columnCount;
-        const rowIndex = Math.floor(entryIndex / columnCount);
+const pdfPosition = position
+    ? getPdfPositionFromVisualPosition(
+        position,
+        width,
+        height,
+        rotation
+    )
+    : null;
 
-        const columnLeft = position
-            ? position.x * width
-            : boxX +
-            paddingX +
-            (columnIndex * (cardWidth + columnGap));
+const signatureWidth = pdfPosition
+    ? pdfPosition.width
+    : Math.min(90, cardWidth);
 
-        const signatureY = position
-            ? height - (position.y * height) - (position.height * height)
-            : (contentTop - (rowIndex * rowHeight) - signatureHeight);
+const signatureHeightValue = pdfPosition
+    ? pdfPosition.height
+    : signatureHeight;
+
+const columnIndex = entryIndex % columnCount;
+const rowIndex = Math.floor(entryIndex / columnCount);
+
+const columnLeft = pdfPosition
+    ? pdfPosition.x
+    : boxX +
+    paddingX +
+    (columnIndex * (cardWidth + columnGap));
+
+const signatureY = pdfPosition
+    ? pdfPosition.y
+    : (contentTop - (rowIndex * rowHeight) - signatureHeight);
 
         const detailsTopY = signatureY - 16;
 
@@ -238,8 +306,8 @@ const fieldSpacing = Math.max(
             page.drawImage(signatureImage, {
                 x: columnLeft,
                 y: signatureY,
-                width: position ? position.width * width : signatureWidth,
-                height: position ? position.height * height : signatureHeight,
+                width: signatureWidth,
+                height: signatureHeightValue,
             });
         }
 

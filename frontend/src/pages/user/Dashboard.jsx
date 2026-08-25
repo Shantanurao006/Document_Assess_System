@@ -537,25 +537,15 @@ const nextY = Math.min(
         }
       }
 
-      const approvalPositions = documents.map((document, documentIndex) => {
-  const pageElement = getPreviewPageElement(
-    previewRefs.current[documentIndex]
-  );
-
-  const pageRect = pageElement?.getBoundingClientRect();
-
-  if (!pageRect) {
-    return [];
-  }
-
+  const approvalPositions = documents.map((document) => {
   return (document.annotations || [])
     .filter((annotation) => annotation.type === "status")
     .map((annotation) => ({
       pageNumber: 1,
-      x: annotation.x / pageRect.width,
-      y: annotation.y / pageRect.height,
-      width: annotation.width / pageRect.width,
-      height: annotation.height / pageRect.height,
+      x: annotation.xRatio,
+      y: annotation.yRatio,
+      width: annotation.widthRatio,
+      height: annotation.heightRatio,
     }));
 });
 
