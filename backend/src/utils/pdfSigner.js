@@ -1,11 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const {
-    PDFDocument,
-    rgb,
-    StandardFonts,
-    degrees,
-} = require("pdf-lib");
+const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 const { ensureUploadDirectories, signedDir } = require("../config/uploadPaths");
 
 const DEFAULT_APPROVAL_FIELDS = [
@@ -313,7 +308,6 @@ const signatureY = pdfPosition
                 y: signatureY,
                 width: signatureWidth,
                 height: signatureHeightValue,
-                rotate: degrees(-rotation),
             });
         }
 
