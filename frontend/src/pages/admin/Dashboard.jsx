@@ -620,51 +620,50 @@ const handleView = (document) => {
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openRejectReasonDialog}
-        onClose={() => {
-          setOpenRejectReasonDialog(false);
-          setOpenDialog(true);
-        }}
-        fullWidth
-        maxWidth="sm"
-        slotProps={{
-          root: {
-            sx: { zIndex: (theme) => theme.zIndex.modal + 1 },
-          },
-        }}
-      >
-        <DialogTitle>Rejection Reason</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            multiline
-            minRows={3}
-            margin="normal"
-            label="Reason for rejection"
-            value={rejectionReason}
-            onChange={(event) => setRejectionReason(event.target.value)}
-            helperText="Please enter at least 5 characters."
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setOpenRejectReasonDialog(false);
-              setOpenDialog(true);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => handleSubmit(true)}
-          >
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {openRejectReasonDialog && (
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            zIndex: (theme) => theme.zIndex.modal + 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            p: 2,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <Paper sx={{ width: "100%", maxWidth: 560, p: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Rejection Reason
+            </Typography>
+            <TextField
+              autoFocus
+              fullWidth
+              multiline
+              minRows={3}
+              margin="normal"
+              label="Reason for rejection"
+              value={rejectionReason}
+              onChange={(event) => setRejectionReason(event.target.value)}
+              helperText="Please enter at least 5 characters."
+            />
+            <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
+              <Button
+                onClick={() => {
+                  setOpenRejectReasonDialog(false);
+                  setOpenDialog(true);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button variant="contained" onClick={() => handleSubmit(true)}>
+                OK
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+      )}
     </Box>
   );
 }
