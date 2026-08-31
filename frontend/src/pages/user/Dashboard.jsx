@@ -820,7 +820,7 @@ const response = await uploadDocuments(
                           overflowY: "auto",
                           width: "100%",
                           maxWidth: "100%",
-                          minHeight: 760,
+                          height: 760,
                           borderRadius: 3,
                           border: "1px solid #e9eef4",
                           bgcolor: "#f9fbff",
