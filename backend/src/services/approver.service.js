@@ -120,7 +120,8 @@ const admin = adminResult.rows[0];
     approval_box_config,
     uploaded_by,
     approval_order,
-    assigned_to
+    assigned_to,
+    status
 FROM document_assignments
 WHERE id = $1
         `,
@@ -151,6 +152,12 @@ WHERE id = $1
 
     if (assignment.assigned_to !== admin.id) {
         throw new Error("This document is not assigned to this approver.");
+    }
+
+    if (assignment.status !== "Pending") {
+        const error = new Error("This document has already been processed and cannot be changed.");
+        error.statusCode = 400;
+        throw error;
     }
 
     const previousApprovals = await pool.query(
@@ -302,7 +309,7 @@ const signedPdfPath = await signPdf(
 );
 
     // Update DB
-    await pool.query(
+    const updateResult = await pool.query(
     `
     UPDATE document_assignments
         SET
@@ -312,7 +319,9 @@ const signedPdfPath = await signPdf(
             approved_by = $4,
             signed_pdf_name = $5,
             rejection_reason = $6
-        WHERE id = $7;
+        WHERE id = $7
+            AND status = 'Pending'
+        RETURNING id;
     `,
     [
         status,
@@ -324,6 +333,12 @@ const signedPdfPath = await signPdf(
         documentId,
     ]
 );
+
+    if (updateResult.rows.length === 0) {
+        const error = new Error("This document has already been processed and cannot be changed.");
+        error.statusCode = 400;
+        throw error;
+    }
 
     return {
         documentId,

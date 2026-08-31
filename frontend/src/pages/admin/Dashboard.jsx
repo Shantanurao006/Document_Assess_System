@@ -183,6 +183,11 @@ const handleView = (document) => {
 
   const handleSubmit = async () => {
     try {
+      if (selectedDocument?.status !== "Pending") {
+        alert("This document has already been processed and cannot be changed.");
+        return;
+      }
+
       if (!approvalStatus) {
         alert("Please select approval status.");
         return;
@@ -560,7 +565,12 @@ const handleView = (document) => {
           <Box mt={4}>
             <FormControl fullWidth margin="normal">
               <InputLabel>Status</InputLabel>
-              <Select value={approvalStatus} label="Status" onChange={(e) => setApprovalStatus(e.target.value)}>
+              <Select
+                value={approvalStatus}
+                label="Status"
+                disabled={selectedDocument?.status !== "Pending"}
+                onChange={(e) => setApprovalStatus(e.target.value)}
+              >
                 <MenuItem value="Approved">Approve</MenuItem>
                 <MenuItem value="Rejected">Reject</MenuItem>
               </Select>
@@ -619,7 +629,12 @@ const handleView = (document) => {
 
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" color="success" onClick={handleSubmit}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleSubmit}
+            disabled={selectedDocument?.status !== "Pending"}
+          >
             Submit
           </Button>
         </DialogActions>
