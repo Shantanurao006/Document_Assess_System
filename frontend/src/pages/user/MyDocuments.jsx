@@ -268,6 +268,10 @@ return (
                 </TableCell>
 
                 <TableCell>
+                  <b>Rejection Reason</b>
+                </TableCell>
+
+                <TableCell>
                   <b>Status</b>
                 </TableCell>
 
@@ -290,7 +294,7 @@ return (
                 <TableRow>
 
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     align="center"
                   >
                     No Documents Found
@@ -333,6 +337,10 @@ return (
                           ? "Approval chain stopped"
                           : "Waiting for the current approver"}
                       </Typography>
+                    </TableCell>
+
+                    <TableCell sx={{ maxWidth: 260, whiteSpace: "pre-wrap" }}>
+                      {doc.status === "Rejected" ? doc.rejection_reason || "-" : "-"}
                     </TableCell>
 
                     <TableCell>

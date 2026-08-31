@@ -23,6 +23,7 @@ exports.getMyDocuments = async (req, res) => {
                 da.signed_pdf_name,
                 approval_stats.total_approvers,
                 approval_stats.completed_approvals,
+                rejected_by.rejection_reason,
                 CASE
                     WHEN approval_stats.rejected_approvals > 0
                         THEN 'Rejected by ' || COALESCE(rejected_by.email, assigned_user.email)
@@ -62,7 +63,9 @@ exports.getMyDocuments = async (req, res) => {
                 LIMIT 1
             ) current_pending ON true
             LEFT JOIN LATERAL (
-                SELECT COALESCE(rejected_user.email, assigned_rejected_user.email) AS email
+                SELECT
+                    COALESCE(rejected_user.email, assigned_rejected_user.email) AS email,
+                    rejected_da.rejection_reason
                 FROM document_assignments rejected_da
                 INNER JOIN users assigned_rejected_user
                     ON rejected_da.assigned_to = assigned_rejected_user.id
