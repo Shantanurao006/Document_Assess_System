@@ -191,6 +191,7 @@ const handleView = (document) => {
       }
 
       if (approvalStatus === "Rejected" && !isRejectConfirmation) {
+        setOpenDialog(false);
         setOpenRejectReasonDialog(true);
         return;
       }
@@ -621,7 +622,10 @@ const handleView = (document) => {
 
       <Dialog
         open={openRejectReasonDialog}
-        onClose={() => setOpenRejectReasonDialog(false)}
+        onClose={() => {
+          setOpenRejectReasonDialog(false);
+          setOpenDialog(true);
+        }}
         fullWidth
         maxWidth="sm"
         slotProps={{
@@ -645,7 +649,14 @@ const handleView = (document) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenRejectReasonDialog(false)}>Cancel</Button>
+          <Button
+            onClick={() => {
+              setOpenRejectReasonDialog(false);
+              setOpenDialog(true);
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             variant="contained"
             onClick={() => handleSubmit(true)}
