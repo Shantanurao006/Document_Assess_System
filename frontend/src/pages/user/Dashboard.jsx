@@ -52,26 +52,16 @@ const [documents, setDocuments] = useState([
   const [statusPlacement, setStatusPlacement] = useState({ x: 16, y: 16 });
   const [statusSize, setStatusSize] = useState({ width: 240, height: 156 });
   const [dragSource, setDragSource] = useState("side");
-  const previewContainerRef = useRef(null);
   const previewRefs = useRef([]);
+  const previewPageRefs = useRef([]);
   const [previewDims, setPreviewDims] = useState([]);
   const [pageWidths, setPageWidths] = useState([]);
+  const [pdfPageCounts, setPdfPageCounts] = useState([]);
   const [draggingDocIndex, setDraggingDocIndex] = useState(0);
   const [draggingAnnotationIndex, setDraggingAnnotationIndex] = useState(null);
   const previewUrls = documents.map((doc) => doc.previewUrl).join("|");
   const resizeRef = useRef(null);
   const hasPreview = documents.some((d) => !!d.previewUrl);
-
-  const getPreviewPageElement = useCallback((container) => {
-    if (!container) return null;
-    return (
-      container.querySelector(".react-pdf__Page") ||
-      container.querySelector("img") ||
-      container.querySelector("canvas")?.closest(".react-pdf__Page") ||
-      container
-    );
-  }, []);
-
 
 const updatePreviewDims = useCallback(() => {
   const dims = [];
@@ -84,23 +74,18 @@ const updatePreviewDims = useCallback(() => {
       return;
     }
 
-    const pageElement = getPreviewPageElement(container);
-
-    if (!pageElement) {
-      dims.push(null);
-      widths.push(900);
-      return;
-    }
-
+    const pageElement =
+      container.querySelector(".react-pdf__Page") ||
+      container.querySelector("img") ||
+      container;
     const rect = pageElement.getBoundingClientRect();
-const containerRect = container.getBoundingClientRect();
-
-dims.push({
-  width: rect.width,
-  height: rect.height,
-  leftOffset: rect.left - containerRect.left,
-  topOffset: rect.top - containerRect.top,
-});
+    const containerRect = container.getBoundingClientRect();
+    dims.push({
+      width: rect.width,
+      height: rect.height,
+      leftOffset: rect.left - containerRect.left,
+      topOffset: rect.top - containerRect.top,
+    });
 
 widths.push(
   Math.max(container.clientWidth - 8, 640)
@@ -110,7 +95,7 @@ widths.push(
   setPreviewDims(dims);
   setPageWidths(widths);
 
-}, [getPreviewPageElement]);
+}, []);
 
   const hasApprovalBox = (document) =>
     (document.annotations || []).some(
@@ -123,7 +108,8 @@ widths.push(
     const handlePointerMove = (event) => {
       // when dragging an already-placed status, move it live
       if (dragSource === "preview") {
-        const previewEl = getPreviewPageElement(previewRefs.current[draggingDocIndex]) || previewContainerRef.current;
+        const annotation = documents[draggingDocIndex]?.annotations?.[draggingAnnotationIndex];
+        const previewEl = previewPageRefs.current[draggingDocIndex]?.[annotation?.pageNumber || 1];
         const rect = previewEl?.getBoundingClientRect();
         if (rect && draggingAnnotationIndex != null) {
           const nextX = Math.min(
@@ -171,22 +157,26 @@ widths.push(
     };
 
     const handlePointerUp = (event) => {
-      // find which preview (if any) the pointer is over
+      // find which PDF page (if any) the pointer is over
       let targetIndex = -1;
-      for (let i = 0; i < previewRefs.current.length; i++) {
-        const el = previewRefs.current[i];
-        if (!el) continue;
-        const pageElement = getPreviewPageElement(previewRefs.current[i]);
-        const r = pageElement.getBoundingClientRect();
-        if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) {
-          targetIndex = i;
-          break;
+      let targetPageNumber = 1;
+      for (let i = 0; i < previewPageRefs.current.length; i++) {
+        const pages = previewPageRefs.current[i] || [];
+        for (let pageNumber = 1; pageNumber < pages.length; pageNumber++) {
+          const pageElement = pages[pageNumber];
+          if (!pageElement) continue;
+          const r = pageElement.getBoundingClientRect();
+          if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) {
+            targetIndex = i;
+            targetPageNumber = pageNumber;
+            break;
+          }
         }
+        if (targetIndex !== -1) break;
       }
 
       if (targetIndex !== -1) {
-const container = previewRefs.current[targetIndex];
-const pageElement = getPreviewPageElement(container);
+const pageElement = previewPageRefs.current[targetIndex][targetPageNumber];
 
 const pageRect = pageElement.getBoundingClientRect();
 
@@ -227,6 +217,7 @@ const nextY = Math.min(
             y: nextY,
             width: statusSize.width,
             height: statusSize.height,
+            pageNumber: targetPageNumber,
             fields: APPROVAL_BOX_FIELDS,
             ...ratioConfig,
           };
@@ -251,6 +242,7 @@ const nextY = Math.min(
               y: nextY,
               width: existingAnnotation.width || statusSize.width,
               height: existingAnnotation.height || statusSize.height,
+              pageNumber: targetPageNumber,
               ...ratioConfig,
             };
             return copy;
@@ -268,7 +260,7 @@ const nextY = Math.min(
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [dragSource, isDragging, draggingAnnotationIndex, statusSize, draggingDocIndex, getPreviewPageElement]);
+  }, [dragSource, isDragging, draggingAnnotationIndex, statusSize, draggingDocIndex, documents]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -282,12 +274,11 @@ const nextY = Math.min(
     });
 
     previewRefs.current.forEach((el) => {
-      const pageElement = getPreviewPageElement(el) || el;
-      if (pageElement) observer.observe(pageElement);
+      if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
-  }, [documents.length, previewUrls, getPreviewPageElement, updatePreviewDims]);
+  }, [documents.length, previewUrls, updatePreviewDims]);
 
   const handleLogout = () => {
     clearUserSession();
@@ -308,6 +299,13 @@ const nextY = Math.min(
 
     updatedDocuments[index].file = file;
     updatedDocuments[index].previewUrl = file ? URL.createObjectURL(file) : "";
+
+    setPdfPageCounts((previous) => {
+      const next = [...previous];
+      next[index] = 0;
+      return next;
+    });
+    previewPageRefs.current[index] = [];
 
     setDocuments(updatedDocuments);
   };
@@ -450,8 +448,8 @@ const nextY = Math.min(
       const nextHeight = Math.max(46, startHeight + (moveEvent.clientY - startY));
       setStatusSize({ width: nextWidth, height: nextHeight });
 
-      const previewEl = previewRefs.current[documentIndex];
-      const previewRect = getPreviewPageElement(previewEl)?.getBoundingClientRect();
+      const previewEl = previewPageRefs.current[documentIndex]?.[annotation?.pageNumber || 1];
+      const previewRect = previewEl?.getBoundingClientRect();
       const ratioConfig = previewRect
         ? {
             xRatio: (annotation?.x ?? 0) / previewRect.width,
@@ -541,7 +539,7 @@ const nextY = Math.min(
   return (document.annotations || [])
     .filter((annotation) => annotation.type === "status")
     .map((annotation) => ({
-      pageNumber: 1,
+      pageNumber: annotation.pageNumber || 1,
       x: annotation.xRatio,
       y: annotation.yRatio,
       width: annotation.widthRatio,
@@ -581,6 +579,80 @@ const response = await uploadDocuments(
       setIsSubmitting(false);
     }
   };
+
+  const renderApprovalBoxes = (document, documentIndex, pageNumber) =>
+    (document.annotations || [])
+      .map((annotation, annotationIndex) => ({ annotation, annotationIndex }))
+      .filter(({ annotation }) => (annotation.pageNumber || 1) === pageNumber)
+      .map(({ annotation, annotationIndex }) => {
+        const width = `${Math.max(annotation.widthRatio || 0.25, 0.08) * 100}%`;
+        const height = `${Math.max(annotation.heightRatio || 0.17, 0.05) * 100}%`;
+        const scale = Math.max(
+          0.75,
+          Math.min(1, Math.min((annotation.widthRatio || 0.25) / 0.25, (annotation.heightRatio || 0.17) / 0.17))
+        );
+
+        return (
+          <Box
+            key={annotation.id || annotationIndex}
+            ref={annotationIndex === draggingAnnotationIndex ? resizeRef : null}
+            sx={{
+              position: "absolute",
+              left: `${Math.max(annotation.xRatio || 0, 0) * 100}%`,
+              top: `${Math.max(annotation.yRatio || 0, 0) * 100}%`,
+              zIndex: 2,
+              width,
+              height,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: 0.35,
+              px: 1.4,
+              py: 1,
+              borderRadius: 6,
+              bgcolor: "rgba(255,245,230,0.35)",
+              border: "3px dashed #ffb74d",
+              boxShadow: 1,
+              cursor: "move",
+              userSelect: "none",
+              touchAction: "none",
+              overflow: "hidden",
+              fontSize: `${scale}rem`,
+              lineHeight: 1.2,
+              "& .MuiTypography-root": { fontSize: "inherit" },
+            }}
+            onPointerDown={(event) => handleDragStart(event, "preview", documentIndex, annotationIndex)}
+          >
+            <Box sx={{ position: "absolute", right: 8, top: 8, zIndex: 3 }}>
+              <RemoveCircleOutlineIcon
+                fontSize="small"
+                sx={{ color: "#d32f2f", cursor: "pointer" }}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removeApprovalBox(documentIndex, annotationIndex);
+                }}
+              />
+            </Box>
+            <Typography variant="body2" fontWeight={700} sx={{ color: "#ef6c00" }}>
+              Approval Box
+            </Typography>
+            {(annotation.fields || APPROVAL_BOX_FIELDS).map((fieldLabel) => (
+              <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
+                {fieldLabel}
+              </Typography>
+            ))}
+            <Box
+              sx={{
+                position: "absolute", right: 6, bottom: 6, width: 14, height: 14,
+                transform: "rotate(45deg)", borderRight: "4px solid #ef6c00",
+                borderBottom: "4px solid #ef6c00", cursor: "nwse-resize",
+              }}
+              onPointerDown={(event) => handleResizeStart(event, documentIndex, annotationIndex)}
+            />
+          </Box>
+        );
+      });
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f5f5f5" }}>
@@ -745,7 +817,7 @@ const response = await uploadDocuments(
                       <Box
                         sx={{
                           position: "relative",
-                          overflow: "hidden",
+                          overflowY: "auto",
                           width: "100%",
                           maxWidth: "100%",
                           minHeight: 760,
@@ -755,13 +827,20 @@ const response = await uploadDocuments(
                         }}
                         ref={(el) => {
                           previewRefs.current[documentIndex] = el;
-                          previewContainerRef.current = el;
                         }}
                       >
                         {document.previewUrl ? (
                           <>
                             {document.file?.type.startsWith("image/") ? (
-                              <Box sx={{ display: "block", position: "relative", width: "fit-content", maxWidth: "100%" }}>
+                              <Box
+                                ref={(el) => {
+                                  if (!previewPageRefs.current[documentIndex]) {
+                                    previewPageRefs.current[documentIndex] = [];
+                                  }
+                                  previewPageRefs.current[documentIndex][1] = el;
+                                }}
+                                sx={{ display: "block", position: "relative", width: "fit-content", maxWidth: "100%" }}
+                              >
                                 <img
                                   src={document.previewUrl}
                                   alt={document.file?.name || "Document preview"}
@@ -773,25 +852,52 @@ const response = await uploadDocuments(
                               <Box sx={{ display: "block", position: "relative", width: "100%", maxWidth: "100%" }}>
                                 <Document
                                   file={document.previewUrl}
-                                  onLoadSuccess={handlePdfRenderSuccess}
+                                  onLoadSuccess={({ numPages }) => {
+                                    setPdfPageCounts((previous) => {
+                                      const next = [...previous];
+                                      next[documentIndex] = numPages;
+                                      return next;
+                                    });
+                                    handlePdfRenderSuccess();
+                                  }}
                                   onLoadError={(error) => {
                                     console.error("PDF Load Error:", error);
                                   }}
                                   loading={<Typography>Loading PDF...</Typography>}
                                   error={<Typography color="error">Unable to load PDF.</Typography>}
                                 >
-                                  <Page
-    pageNumber={1}
-    width={pageWidths[documentIndex] || 900}
-    
-    onRenderSuccess={handlePdfRenderSuccess}
-/>
+                                  {Array.from(
+                                    new Array(pdfPageCounts[documentIndex] || 0),
+                                    (_, pageIndex) => {
+                                      const pageNumber = pageIndex + 1;
+                                      return (
+                                        <Box
+                                          key={`page-${pageNumber}`}
+                                          ref={(el) => {
+                                            if (!previewPageRefs.current[documentIndex]) {
+                                              previewPageRefs.current[documentIndex] = [];
+                                            }
+                                            previewPageRefs.current[documentIndex][pageNumber] = el;
+                                          }}
+                                          sx={{ position: "relative", width: "fit-content", maxWidth: "100%", mb: 2 }}
+                                        >
+                                          <Page
+                                            pageNumber={pageNumber}
+                                            width={pageWidths[documentIndex] || 900}
+                                            onRenderSuccess={handlePdfRenderSuccess}
+                                          />
+                                          {renderApprovalBoxes(document, documentIndex, pageNumber)}
+                                        </Box>
+                                      );
+                                    }
+                                  )}
                                 </Document>
                               </Box>
                             )}
 
                             <Box
                               sx={{
+                                display: document.file?.type.startsWith("image/") ? "block" : "none",
                                 position: "absolute",
                                 top: `${Math.max(
                                   (previewDims[documentIndex]?.topOffset || 0),
