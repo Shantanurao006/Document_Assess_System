@@ -624,7 +624,11 @@ const handleView = (document) => {
         onClose={() => setOpenRejectReasonDialog(false)}
         fullWidth
         maxWidth="sm"
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
+        slotProps={{
+          root: {
+            sx: { zIndex: (theme) => theme.zIndex.modal + 1 },
+          },
+        }}
       >
         <DialogTitle>Rejection Reason</DialogTitle>
         <DialogContent>
@@ -644,7 +648,6 @@ const handleView = (document) => {
           <Button onClick={() => setOpenRejectReasonDialog(false)}>Cancel</Button>
           <Button
             variant="contained"
-            disabled={rejectionReason.trim().length < 5}
             onClick={() => handleSubmit(true)}
           >
             OK
