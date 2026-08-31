@@ -181,36 +181,16 @@ const handleView = (document) => {
     navigate("/");
   };
 
-  const handleSubmit = async (isRejectConfirmation = false, confirmedRejectionReason = "") => {
+  const handleSubmit = async () => {
     try {
       if (!approvalStatus) {
         alert("Please select approval status.");
         return;
       }
 
-      if (approvalStatus === "Rejected" && !isRejectConfirmation) {
-        const enteredReason = window.prompt(
-          "Enter the rejection reason (minimum 5 characters):",
-          rejectionReason
-        );
-
-        if (enteredReason === null) {
-          return;
-        }
-
-        if (enteredReason.trim().length < 5) {
-          alert("Rejection reason must contain at least 5 characters.");
-          return;
-        }
-
-        setRejectionReason(enteredReason.trim());
-        await handleSubmit(true, enteredReason.trim());
-        return;
-      }
-
       if (
         approvalStatus === "Rejected" &&
-        confirmedRejectionReason.trim().length < 5
+        rejectionReason.trim().length < 5
       ) {
         alert("Rejection reason must contain at least 5 characters.");
         return;
@@ -231,7 +211,7 @@ const handleView = (document) => {
       formData.append("approvalDateTime", approvalDateTime.toISOString());
       formData.append("approvedBy", user.email);
       if (approvalStatus === "Rejected") {
-        formData.append("rejectionReason", confirmedRejectionReason.trim());
+        formData.append("rejectionReason", rejectionReason.trim());
       }
       if (approvalStatus === "Approved" && signatureImage) {
         formData.append("signature", signatureImage);
@@ -599,6 +579,19 @@ const handleView = (document) => {
                 }}
               />
             </LocalizationProvider>
+
+            {approvalStatus === "Rejected" && (
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                margin="normal"
+                label="Reason for rejection"
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                helperText="Please enter at least 5 characters."
+              />
+            )}
 
             {approvalStatus === "Approved" && (
               <>
