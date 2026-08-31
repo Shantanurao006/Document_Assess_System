@@ -76,7 +76,6 @@ function AdminDashboard() {
   const [signatureImage, setSignatureImage] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState("");
   const [signatureFilename, setSignatureFilename] = useState("");
-  const [openRejectReasonDialog, setOpenRejectReasonDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const previewWrapperRef = useRef(null);
@@ -160,7 +159,6 @@ const handleView = (document) => {
 };
 
   const handleCloseDialog = () => {
-    setOpenRejectReasonDialog(false);
     setRejectionReason("");
     setOpenDialog(false);
     setSelectedDocument(null);
@@ -183,7 +181,7 @@ const handleView = (document) => {
     navigate("/");
   };
 
-  const handleSubmit = async (isRejectConfirmation = false) => {
+  const handleSubmit = async (isRejectConfirmation = false, confirmedRejectionReason = "") => {
     try {
       if (!approvalStatus) {
         alert("Please select approval status.");
@@ -191,14 +189,28 @@ const handleView = (document) => {
       }
 
       if (approvalStatus === "Rejected" && !isRejectConfirmation) {
-        setOpenDialog(false);
-        setOpenRejectReasonDialog(true);
+        const enteredReason = window.prompt(
+          "Enter the rejection reason (minimum 5 characters):",
+          rejectionReason
+        );
+
+        if (enteredReason === null) {
+          return;
+        }
+
+        if (enteredReason.trim().length < 5) {
+          alert("Rejection reason must contain at least 5 characters.");
+          return;
+        }
+
+        setRejectionReason(enteredReason.trim());
+        await handleSubmit(true, enteredReason.trim());
         return;
       }
 
       if (
         approvalStatus === "Rejected" &&
-        rejectionReason.trim().length < 5
+        confirmedRejectionReason.trim().length < 5
       ) {
         alert("Rejection reason must contain at least 5 characters.");
         return;
@@ -219,7 +231,7 @@ const handleView = (document) => {
       formData.append("approvalDateTime", approvalDateTime.toISOString());
       formData.append("approvedBy", user.email);
       if (approvalStatus === "Rejected") {
-        formData.append("rejectionReason", rejectionReason.trim());
+        formData.append("rejectionReason", confirmedRejectionReason.trim());
       }
       if (approvalStatus === "Approved" && signatureImage) {
         formData.append("signature", signatureImage);
@@ -620,50 +632,6 @@ const handleView = (document) => {
         </DialogActions>
       </Dialog>
 
-      {openRejectReasonDialog && (
-        <Box
-          sx={{
-            position: "fixed",
-            inset: 0,
-            zIndex: (theme) => theme.zIndex.modal + 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            p: 2,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <Paper sx={{ width: "100%", maxWidth: 560, p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Rejection Reason
-            </Typography>
-            <TextField
-              autoFocus
-              fullWidth
-              multiline
-              minRows={3}
-              margin="normal"
-              label="Reason for rejection"
-              value={rejectionReason}
-              onChange={(event) => setRejectionReason(event.target.value)}
-              helperText="Please enter at least 5 characters."
-            />
-            <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
-              <Button
-                onClick={() => {
-                  setOpenRejectReasonDialog(false);
-                  setOpenDialog(true);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button variant="contained" onClick={() => handleSubmit(true)}>
-                OK
-              </Button>
-            </Stack>
-          </Paper>
-        </Box>
-      )}
     </Box>
   );
 }
