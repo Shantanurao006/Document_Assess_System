@@ -234,10 +234,10 @@ const signPdf = async (
         });
 
     const pages = pdfDoc.getPages();
-    const page = pages[0];
+    let page = pages[0];
 
-    const { width, height } = page.getSize();
-    const rotation = page.getRotation().angle;
+    let { width, height } = page.getSize();
+    let rotation = page.getRotation().angle;
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -325,6 +325,11 @@ const fieldSpacing = Math.max(
             ? REJECTED_APPROVAL_FIELDS
             : orderedFields;
 const position = approvalPositions[entryIndex];
+
+const pageNumber = Number(position?.page_number ?? position?.pageNumber ?? 1);
+page = pages[Math.min(Math.max(pageNumber, 1), pages.length) - 1];
+({ width, height } = page.getSize());
+rotation = page.getRotation().angle;
 
 const approvalTransform = position
     ? getApprovalDrawTransform(

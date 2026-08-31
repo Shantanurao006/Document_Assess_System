@@ -27,6 +27,17 @@ router.get("/documents/:adminId", async (req, res) => {
     da.stored_file_name,
     latest_signed.signed_pdf_name,
     da.approval_box_config,
+    COALESCE((
+        SELECT json_agg(json_build_object(
+            'pageNumber', dap.page_number,
+            'x', dap.x,
+            'y', dap.y,
+            'width', dap.width,
+            'height', dap.height
+        ) ORDER BY dap.id)
+        FROM document_approval_positions dap
+        WHERE dap.document_id = da.document_id
+    ), '[]'::json) AS approval_positions,
     da.assigned_datetime,
     da.status,
     da.approval_order,

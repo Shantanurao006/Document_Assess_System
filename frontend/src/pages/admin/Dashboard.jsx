@@ -252,6 +252,53 @@ const handleView = (document) => {
     }
   };
 
+  const renderApprovalBox = (approvalBox, approvalBoxIndex, pageNumber) => {
+    const position = selectedDocument?.approval_positions?.[approvalBoxIndex];
+    const boxPageNumber = position?.pageNumber || 1;
+
+    if (boxPageNumber !== pageNumber) return null;
+
+    const xRatio = position?.x ?? approvalBox.xRatio ?? 0;
+    const yRatio = position?.y ?? approvalBox.yRatio ?? 0;
+    const widthRatio = position?.width ?? approvalBox.widthRatio ?? 0.25;
+    const heightRatio = position?.height ?? approvalBox.heightRatio ?? 0.17;
+    const scale = Math.max(0.75, Math.min(1, Math.min(widthRatio / 0.25, heightRatio / 0.17)));
+
+    return (
+      <Box
+        key={`${selectedDocument.id}-approval-box-${approvalBoxIndex}`}
+        sx={{
+          position: "absolute",
+          left: `${xRatio * 100}%`,
+          top: `${yRatio * 100}%`,
+          width: `${widthRatio * 100}%`,
+          height: `${heightRatio * 100}%`,
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.35,
+          px: 1.4,
+          py: 1,
+          borderRadius: 2,
+          bgcolor: "rgba(255,245,230,0.28)",
+          border: "2px dashed #ffb74d",
+          boxShadow: 1,
+          pointerEvents: "none",
+          overflow: "hidden",
+          fontSize: `${scale}rem`,
+          lineHeight: 1.2,
+          "& .MuiTypography-root": { fontSize: "inherit" },
+        }}
+      >
+        {(approvalBox.fields || DEFAULT_APPROVAL_BOX_FIELDS).map((fieldLabel) => (
+          <Typography key={fieldLabel} variant="body2" sx={{ color: "#424242" }}>
+            {fieldLabel}
+          </Typography>
+        ))}
+      </Box>
+    );
+  };
+
   const filteredDocuments = [...documents]
     .sort(
       (firstDoc, secondDoc) =>
@@ -460,7 +507,7 @@ const handleView = (document) => {
           {selectedDocument && (
             <Box
               ref={previewWrapperRef}
-              sx={{ position: "relative", display: "inline-block", width: "100%", maxWidth: "100%" }}
+              sx={{ position: "relative", width: "100%", maxWidth: "100%", height: 760, overflowY: "auto" }}
             >
               {(() => {
                 const candidateUrl = selectedDocument.file_url || `/uploads/${selectedDocument.stored_file_name}`;
@@ -479,14 +526,27 @@ const handleView = (document) => {
                     loading={<Typography>Loading PDF...</Typography>}
                     error={<Typography color="error">Unable to load PDF.</Typography>}
                   >
-                    {Array.from(new Array(numPages), (_, index) => (
-                      <Page
-                        key={`page_${index + 1}`}
-                        pageNumber={index + 1}
-                        onRenderSuccess={updatePreviewDims}
-                        width={Math.max(320, Math.min(previewDims.width || 700, 900))}
-                      />
-                    ))}
+                    {Array.from(new Array(numPages), (_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <Box
+                          key={`page_${pageNumber}`}
+                          sx={{ position: "relative", width: "fit-content", maxWidth: "100%", mb: 2 }}
+                        >
+                          <Page
+                            pageNumber={pageNumber}
+                            onRenderSuccess={updatePreviewDims}
+                            width={Math.max(320, Math.min(previewDims.width || 700, 900))}
+                          />
+                          {Array.isArray(selectedDocument.approval_box_config) &&
+                            selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) =>
+                              approvalBoxIndex === Number(selectedDocument.approval_order) - 1
+                                ? renderApprovalBox(approvalBox, approvalBoxIndex, pageNumber)
+                                : null
+                            )}
+                        </Box>
+                      );
+                    })}
                   </Document>
                 ) : (
                   <img
@@ -497,7 +557,8 @@ const handleView = (document) => {
                 );
               })()}
 
-              {Array.isArray(selectedDocument.approval_box_config) &&
+              {!selectedDocument.stored_file_name?.toLowerCase().endsWith(".pdf") &&
+              Array.isArray(selectedDocument.approval_box_config) &&
               selectedDocument.approval_box_config.length > 0 &&
               selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) => {
                 if (approvalBoxIndex !== Number(selectedDocument.approval_order) - 1) {
