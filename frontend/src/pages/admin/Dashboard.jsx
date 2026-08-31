@@ -114,13 +114,31 @@ function AdminDashboard() {
 
   const updatePreviewDims = useCallback(() => {
     const wrapper = previewWrapperRef.current;
+    if (!wrapper) return;
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const pdfDocument = wrapper.querySelector(".react-pdf__Document");
+    if (pdfDocument) {
+      const pageElement =
+        wrapper.querySelector(".react-pdf__Page") ||
+        wrapper.querySelector("canvas")?.closest(".react-pdf__Page");
+      const pageRect = pageElement?.getBoundingClientRect();
+      const availableWidth = Math.max(720, (wrapper.clientWidth || wrapperRect.width || 900) - 32);
+      setPreviewDims({
+        width: availableWidth,
+        height: pageRect?.height || 900,
+        offsetLeft: 0,
+        offsetTop: 0,
+      });
+      return;
+    }
+
     const pageElement =
-      wrapper?.querySelector(".react-pdf__Page") ||
-      wrapper?.querySelector("canvas")?.closest(".react-pdf__Page");
+      wrapper.querySelector(".react-pdf__Page") ||
+      wrapper.querySelector("canvas")?.closest(".react-pdf__Page");
     const sourceElement = pageElement || wrapper;
 
-    if (sourceElement && wrapper) {
-      const wrapperRect = wrapper.getBoundingClientRect();
+    if (sourceElement) {
       const rect = sourceElement.getBoundingClientRect();
       setPreviewDims({
         width: rect.width,
@@ -466,7 +484,7 @@ const handleView = (document) => {
         </Paper>
       </Box>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="md">
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="lg">
         <DialogTitle>Document Details</DialogTitle>
         <DialogContent>
           <Typography variant="h6" gutterBottom>
@@ -507,7 +525,16 @@ const handleView = (document) => {
           {selectedDocument && (
             <Box
               ref={previewWrapperRef}
-              sx={{ position: "relative", width: "100%", maxWidth: "100%", height: 760, overflowY: "auto" }}
+              sx={{
+                position: "relative",
+                width: "100%",
+                maxWidth: "100%",
+                overflowX: "auto",
+                border: "1px solid #d7dce3",
+                borderRadius: 1,
+                bgcolor: "#f8fafc",
+                p: 2,
+              }}
             >
               {(() => {
                 const candidateUrl = selectedDocument.file_url || `/uploads/${selectedDocument.stored_file_name}`;
@@ -531,12 +558,20 @@ const handleView = (document) => {
                       return (
                         <Box
                           key={`page_${pageNumber}`}
-                          sx={{ position: "relative", width: "fit-content", maxWidth: "100%", mb: 2 }}
+                          sx={{
+                            position: "relative",
+                            width: "fit-content",
+                            maxWidth: "none",
+                            mx: "auto",
+                            mb: 2,
+                            bgcolor: "#fff",
+                            boxShadow: 2,
+                          }}
                         >
                           <Page
                             pageNumber={pageNumber}
                             onRenderSuccess={updatePreviewDims}
-                            width={Math.max(320, Math.min(previewDims.width || 700, 900))}
+                            width={previewDims.width || 900}
                           />
                           {Array.isArray(selectedDocument.approval_box_config) &&
                             selectedDocument.approval_box_config.map((approvalBox, approvalBoxIndex) =>
