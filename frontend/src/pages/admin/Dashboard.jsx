@@ -624,6 +624,7 @@ const handleView = (document) => {
         onClose={() => setOpenRejectReasonDialog(false)}
         fullWidth
         maxWidth="sm"
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
       >
         <DialogTitle>Rejection Reason</DialogTitle>
         <DialogContent>
