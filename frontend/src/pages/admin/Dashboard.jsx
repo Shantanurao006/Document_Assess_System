@@ -76,6 +76,8 @@ function AdminDashboard() {
   const [signatureImage, setSignatureImage] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState("");
   const [signatureFilename, setSignatureFilename] = useState("");
+  const [openRejectReasonDialog, setOpenRejectReasonDialog] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const previewWrapperRef = useRef(null);
 
@@ -152,11 +154,14 @@ function AdminDashboard() {
 
 const handleView = (document) => {
   console.log("SELECTED DOCUMENT:", document);
+  setRejectionReason("");
   setSelectedDocument(document);
   setOpenDialog(true);
 };
 
   const handleCloseDialog = () => {
+    setOpenRejectReasonDialog(false);
+    setRejectionReason("");
     setOpenDialog(false);
     setSelectedDocument(null);
   };
@@ -178,10 +183,23 @@ const handleView = (document) => {
     navigate("/");
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isRejectConfirmation = false) => {
     try {
       if (!approvalStatus) {
         alert("Please select approval status.");
+        return;
+      }
+
+      if (approvalStatus === "Rejected" && !isRejectConfirmation) {
+        setOpenRejectReasonDialog(true);
+        return;
+      }
+
+      if (
+        approvalStatus === "Rejected" &&
+        rejectionReason.trim().length < 5
+      ) {
+        alert("Rejection reason must contain at least 5 characters.");
         return;
       }
 
@@ -199,6 +217,9 @@ const handleView = (document) => {
       formData.append("status", approvalStatus);
       formData.append("approvalDateTime", approvalDateTime.toISOString());
       formData.append("approvedBy", user.email);
+      if (approvalStatus === "Rejected") {
+        formData.append("rejectionReason", rejectionReason.trim());
+      }
       if (approvalStatus === "Approved" && signatureImage) {
         formData.append("signature", signatureImage);
       } else if (approvalStatus === "Approved" && signatureFilename) {
@@ -211,7 +232,11 @@ const handleView = (document) => {
         },
       });
 
-      alert(response.data.message);
+      alert(
+        approvalStatus === "Rejected"
+          ? "Document rejected successfully"
+          : response.data.message
+      );
       handleCloseDialog();
       fetchDocuments();
       // update displayed signature to the newly uploaded file
@@ -590,6 +615,38 @@ const handleView = (document) => {
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button variant="contained" color="success" onClick={handleSubmit}>
             Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openRejectReasonDialog}
+        onClose={() => setOpenRejectReasonDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Rejection Reason</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            minRows={3}
+            margin="normal"
+            label="Reason for rejection"
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
+            helperText="Please enter at least 5 characters."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenRejectReasonDialog(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            disabled={rejectionReason.trim().length < 5}
+            onClick={() => handleSubmit(true)}
+          >
+            OK
           </Button>
         </DialogActions>
       </Dialog>

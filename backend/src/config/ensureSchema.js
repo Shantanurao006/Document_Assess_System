@@ -7,7 +7,8 @@ const ensureSchema = async () => {
             ADD COLUMN IF NOT EXISTS approval_group_id VARCHAR(255),
             ADD COLUMN IF NOT EXISTS approval_box_config JSONB NOT NULL DEFAULT '[]'::jsonb,
             ADD COLUMN IF NOT EXISTS approved_by INTEGER,
-            ADD COLUMN IF NOT EXISTS signed_pdf_name VARCHAR(255);
+            ADD COLUMN IF NOT EXISTS signed_pdf_name VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
     `);
 
     await pool.query(`

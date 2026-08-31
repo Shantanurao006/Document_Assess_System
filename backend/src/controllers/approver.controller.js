@@ -40,7 +40,9 @@ const approveDocument = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Document approved successfully.",
+            message: result.status === "Rejected"
+                ? "Document rejected successfully"
+                : "Document approved successfully.",
             data: result,
         });
 

@@ -63,9 +63,16 @@ const approveDocument = async (body, file) => {
         approvalDateTime,
         approvedBy,
         savedSignatureFilename,
+        rejectionReason,
 } = body;
 
     const requiresSignature = status === "Approved";
+
+    if (status === "Rejected" && (!rejectionReason || rejectionReason.trim().length < 5)) {
+        const error = new Error("Rejection reason must contain at least 5 characters.");
+        error.statusCode = 400;
+        throw error;
+    }
 
     // allow using an existing saved signature when no file is uploaded
     if (requiresSignature && !file) {
@@ -303,8 +310,9 @@ const signedPdfPath = await signPdf(
             approved_datetime = $2,
             signed_by_image = $3,
             approved_by = $4,
-            signed_pdf_name = $5
-        WHERE id = $6;
+            signed_pdf_name = $5,
+            rejection_reason = $6
+        WHERE id = $7;
     `,
     [
         status,
@@ -312,6 +320,7 @@ const signedPdfPath = await signPdf(
         status === "Approved" ? file.filename : null,
         admin.id,
         path.basename(signedPdfPath),
+        status === "Rejected" ? rejectionReason.trim() : null,
         documentId,
     ]
 );
