@@ -70,6 +70,7 @@ FROM document_assignments da
                         = COALESCE(da.approval_group_id, da.stored_file_name)
             ) approval_stats ON true
             WHERE da.assigned_to = $1
+                AND da.uploaded_by <> $1
                 AND NOT EXISTS (
                     SELECT 1
                     FROM document_assignments previous_da
