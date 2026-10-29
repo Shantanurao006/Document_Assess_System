@@ -30,16 +30,20 @@ const formatApprovalDate = (value) => {
         return value || "";
     }
 
-    const month = parsedDate.toLocaleString("en-US", {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Kolkata",
         month: "short",
-        timeZone: "UTC",
-    });
-    const day = String(parsedDate.getUTCDate()).padStart(2, "0");
-    const year = parsedDate.getUTCFullYear();
-    const hours = String(parsedDate.getUTCHours()).padStart(2, "0");
-    const minutes = String(parsedDate.getUTCMinutes()).padStart(2, "0");
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).formatToParts(parsedDate);
+    const dateParts = Object.fromEntries(
+        parts.map(({ type, value }) => [type, value])
+    );
 
-    return `${month} ${day} ${year} ${hours}:${minutes}`;
+    return `${dateParts.month} ${dateParts.day} ${dateParts.year} ${dateParts.hour}:${dateParts.minute} IST`;
 };
 
 const formatApprovalFieldValue = (fieldLabel, entry) => {
