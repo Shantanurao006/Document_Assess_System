@@ -7,6 +7,7 @@ const routes = [
   "/user/dashboard",
   "/user/my-documents",
   "/admin/dashboard",
+  "/admin/uploaded-documents",
 ];
 
 const distDir = join(process.cwd(), "dist");

@@ -121,6 +121,71 @@ FROM document_assignments da
 });
 
 /*
+ * GET Documents Uploaded By An Admin
+ *
+ * This is intentionally separate from the assigned-documents endpoint above.
+ * It lets an uploader track the approval cycle they created without changing
+ * the approver's existing dashboard or approval workflow.
+ */
+router.get("/uploaded-documents/:adminId", async (req, res) => {
+    try {
+        const { adminId } = req.params;
+
+        const result = await pool.query(
+            `
+            SELECT
+                da.document_id AS id,
+                MAX(da.original_file_name) AS original_file_name,
+                MAX(da.stored_file_name) AS stored_file_name,
+                MAX(da.assigned_datetime) AS uploaded_datetime,
+                MAX(dn.note) AS document_note,
+                COUNT(*)::int AS total_approvers,
+                COUNT(*) FILTER (WHERE da.status = 'Approved')::int AS approved_approvals,
+                COUNT(*) FILTER (WHERE da.status = 'Rejected')::int AS rejected_approvals,
+                CASE
+                    WHEN COUNT(*) FILTER (WHERE da.status = 'Rejected') > 0 THEN 'Rejected'
+                    WHEN COUNT(*) FILTER (WHERE da.status = 'Approved') = COUNT(*) THEN 'Approved'
+                    ELSE 'Pending'
+                END AS status,
+                COALESCE(
+                    json_agg(
+                        json_build_object(
+                            'assignment_id', da.id,
+                            'approval_order', da.approval_order,
+                            'approver_email', approver.email,
+                            'status', da.status,
+                            'approved_datetime', da.approved_datetime,
+                            'rejection_reason', da.rejection_reason
+                        )
+                        ORDER BY da.approval_order ASC
+                    ),
+                    '[]'::json
+                ) AS approval_cycle
+            FROM document_assignments da
+            INNER JOIN users approver
+                ON approver.id = da.assigned_to
+            LEFT JOIN document_notes dn
+                ON dn.document_id = da.document_id
+            WHERE da.uploaded_by = $1
+            GROUP BY da.document_id
+            ORDER BY MAX(da.assigned_datetime) DESC
+            `,
+            [adminId]
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: result.rows,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/*
  * Approve / Reject Document
  */
 // GET last uploaded signature for an admin

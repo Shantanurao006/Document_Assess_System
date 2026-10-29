@@ -6,6 +6,7 @@ import Login from "../pages/auth/Login";
 import UserDashboard from "../pages/user/Dashboard";
 import MyDocuments from "../pages/user/MyDocuments";
 import AdminDashboard from "../pages/admin/Dashboard";
+import UploadedDocuments from "../pages/admin/UploadedDocuments";
 import ProtectedRoute from "../auth/ProtectedRoute";
 import SessionTimeout from "../auth/SessionTimeout";
 
@@ -64,7 +65,16 @@ function AppRoutes() {
           path="/admin/my-documents"
           element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Navigate to="/admin/dashboard" replace />
+              <Navigate to="/admin/uploaded-documents" replace />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/uploaded-documents"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <UploadedDocuments />
             </ProtectedRoute>
           }
         />

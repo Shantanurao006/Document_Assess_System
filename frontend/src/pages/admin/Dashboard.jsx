@@ -368,6 +368,14 @@ const handleView = (document) => {
             Upload Documents
           </Button>
           <Button
+            variant="outlined"
+            color="inherit"
+            sx={{ mr: 2, color: "#fff", borderColor: "#fff" }}
+            onClick={() => navigate("/admin/uploaded-documents")}
+          >
+            My Uploaded Documents
+          </Button>
+          <Button
             color="inherit"
             variant="outlined"
             sx={{ borderColor: "white", color: "white" }}
