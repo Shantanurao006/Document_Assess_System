@@ -23,6 +23,30 @@ exports.getMyDocuments = async (req, res) => {
                 da.signed_pdf_name,
                 approval_stats.total_approvers,
                 approval_stats.completed_approvals,
+                COALESCE(
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'assignment_id', cycle_da.id,
+                                'approval_order', cycle_da.approval_order,
+                                'approver_email', COALESCE(cycle_approved.email, cycle_assigned.email),
+                                'status', cycle_da.status,
+                                'approved_datetime', cycle_da.approved_datetime,
+                                'rejection_reason', cycle_da.rejection_reason
+                            )
+                            ORDER BY cycle_da.approval_order ASC
+                        )
+                        FROM document_assignments cycle_da
+                        INNER JOIN users cycle_assigned
+                            ON cycle_da.assigned_to = cycle_assigned.id
+                        LEFT JOIN users cycle_approved
+                            ON cycle_da.approved_by = cycle_approved.id
+                        WHERE cycle_da.uploaded_by = da.uploaded_by
+                            AND COALESCE(cycle_da.approval_group_id, cycle_da.stored_file_name)
+                                = COALESCE(da.approval_group_id, da.stored_file_name)
+                    ),
+                    '[]'::json
+                ) AS approval_cycle,
                 rejected_by.rejection_reason,
                 CASE
                     WHEN approval_stats.rejected_approvals > 0

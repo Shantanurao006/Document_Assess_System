@@ -138,6 +138,22 @@ router.get("/uploaded-documents/:adminId", async (req, res) => {
                 da.document_id AS id,
                 MAX(da.original_file_name) AS original_file_name,
                 MAX(da.stored_file_name) AS stored_file_name,
+                (
+                    SELECT completed_da.id
+                    FROM document_assignments completed_da
+                    WHERE completed_da.document_id = da.document_id
+                        AND completed_da.signed_pdf_name IS NOT NULL
+                    ORDER BY completed_da.approval_order DESC
+                    LIMIT 1
+                ) AS download_assignment_id,
+                (
+                    SELECT completed_da.signed_pdf_name
+                    FROM document_assignments completed_da
+                    WHERE completed_da.document_id = da.document_id
+                        AND completed_da.signed_pdf_name IS NOT NULL
+                    ORDER BY completed_da.approval_order DESC
+                    LIMIT 1
+                ) AS signed_pdf_name,
                 MAX(da.assigned_datetime) AS uploaded_datetime,
                 MAX(dn.note) AS document_note,
                 COUNT(*)::int AS total_approvers,

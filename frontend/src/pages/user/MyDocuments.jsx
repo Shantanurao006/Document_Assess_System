@@ -20,6 +20,10 @@ import {
     Tabs,
     TextField,
     Tooltip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
 } from "@mui/material";
 
 import DownloadIcon from "@mui/icons-material/Download";
@@ -39,6 +43,7 @@ function MyDocuments() {
     const [documents, setDocuments] = useState([]);
     const [statusTab, setStatusTab] = useState("Pending");
     const [searchText, setSearchText] = useState("");
+    const [selectedDocument, setSelectedDocument] = useState(null);
 
 const user = getStoredUser();
 
@@ -283,6 +288,10 @@ return (
                   <b>Download</b>
                 </TableCell>
 
+                <TableCell align="center">
+                  <b>Approval Cycle</b>
+                </TableCell>
+
               </TableRow>
 
             </TableHead>
@@ -294,7 +303,7 @@ return (
                 <TableRow>
 
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     align="center"
                   >
                     No Documents Found
@@ -400,6 +409,16 @@ return (
   </Tooltip>
 </TableCell>
 
+<TableCell align="center">
+  <Button
+    variant="outlined"
+    size="small"
+    onClick={() => setSelectedDocument(doc)}
+  >
+    View Approval Cycle
+  </Button>
+</TableCell>
+
                   </TableRow>
 
                 ))
@@ -415,6 +434,63 @@ return (
       </Paper>
 
     </Box>
+
+    <Dialog
+      open={Boolean(selectedDocument)}
+      onClose={() => setSelectedDocument(null)}
+      fullWidth
+      maxWidth="md"
+    >
+      <DialogTitle>Approval Cycle</DialogTitle>
+      <DialogContent>
+        <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+          {selectedDocument?.original_file_name}
+        </Typography>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell><b>Step</b></TableCell>
+                <TableCell><b>Approver</b></TableCell>
+                <TableCell><b>Status</b></TableCell>
+                <TableCell><b>Decision Date</b></TableCell>
+                <TableCell><b>Rejection Reason</b></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(selectedDocument?.approval_cycle || []).map((approval) => (
+                <TableRow key={approval.assignment_id}>
+                  <TableCell>{approval.approval_order}</TableCell>
+                  <TableCell>{approval.approver_email}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={approval.status}
+                      color={
+                        approval.status === "Approved"
+                          ? "success"
+                          : approval.status === "Rejected"
+                            ? "error"
+                            : "warning"
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {approval.approved_datetime
+                      ? new Date(approval.approved_datetime).toLocaleString()
+                      : "Awaiting decision"}
+                  </TableCell>
+                  <TableCell>{approval.rejection_reason || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setSelectedDocument(null)}>Close</Button>
+      </DialogActions>
+    </Dialog>
 
   </Box>
 );

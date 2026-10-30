@@ -26,6 +26,7 @@ import {
 } from "@mui/material";
 import { clearUserSession, getStoredUser } from "../../auth/session";
 import API from "../../api/api";
+import DownloadIcon from "@mui/icons-material/Download";
 
 function UploadedDocuments() {
   const navigate = useNavigate();
@@ -60,6 +61,26 @@ function UploadedDocuments() {
   const handleLogout = () => {
     clearUserSession();
     navigate("/");
+  };
+
+  const handleDownload = async (document) => {
+    try {
+      const response = await API.get(
+        `/document/download/${document.download_assignment_id}`,
+        { responseType: "blob" }
+      );
+      const url = window.URL.createObjectURL(response.data);
+      const link = window.document.createElement("a");
+      link.href = url;
+      link.download = document.signed_pdf_name || document.original_file_name;
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert("Unable to download the completed document.");
+    }
   };
 
   const filteredDocuments = documents
@@ -166,12 +187,13 @@ function UploadedDocuments() {
                     <TableCell><b>Approval Progress</b></TableCell>
                     <TableCell><b>Status</b></TableCell>
                     <TableCell align="center"><b>Approval Cycle</b></TableCell>
+                    <TableCell align="center"><b>Download</b></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredDocuments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center">
+                      <TableCell colSpan={7} align="center">
                         No {statusTab.toLowerCase()} uploaded documents found.
                       </TableCell>
                     </TableRow>
@@ -207,6 +229,25 @@ function UploadedDocuments() {
                             onClick={() => setSelectedDocument(document)}
                           >
                             View Approval Cycle
+                          </Button>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Button
+                            aria-label="Download completed document"
+                            title={
+                              document.status === "Pending"
+                                ? "Available after approval or rejection"
+                                : "Download completed document"
+                            }
+                            variant="outlined"
+                            size="small"
+                            disabled={
+                              document.status === "Pending" ||
+                              !document.download_assignment_id
+                            }
+                            onClick={() => void handleDownload(document)}
+                          >
+                            <DownloadIcon />
                           </Button>
                         </TableCell>
                       </TableRow>
